@@ -1,0 +1,95 @@
+# Configuration des sources de scraping ImmoScan
+# Chaque source definit ses URLs, selecteurs CSS, frequences et statut.
+
+sources:
+  leboncoin:
+    enabled: true
+    types:
+      - vente
+      - location
+    base_urls:
+      vente: "https://www.leboncoin.fr/recherche?category=9&locations=Besan%C3%A7on_25000&real_estate_type=2&price=120000-160000&rooms=2-3"
+      location: "https://www.leboncoin.fr/recherche?category=10&locations=Besan%C3%A7on_25000&real_estate_type=2&rooms=2-3"
+    selectors:
+      listing_container: "div[data-test-id='adcard_container']"
+      title: "p[data-test-id='ad-title']"
+      price: "span[data-test-id='price']"
+      surface: "p[data-test-id='ad-param-surface']"
+      rooms: "p[data-test-id='ad-param-rooms']"
+      location: "p[data-test-id='ad-address']"
+      link: "a[data-test-id='ad-link']"
+      description: "div[data-test-id='ad-description']"
+      dpe: "div[data-test-id='ad-dpe']"
+      photos: "img[data-test-id='ad-photo']"
+    pagination:
+      param: "page"
+      max_pages: 5
+    rate_limit:
+      delay_min: 2
+      delay_max: 5
+    frequency:
+      vente: "0 7,11,13,16,18,20 * * *"  # 6x/jour
+      location: "0 6 * * *"               # 1x/jour
+
+  pap:
+    enabled: true
+    types:
+      - vente
+      - location
+    base_urls:
+      vente: "https://www.pap.fr/annonce/vente-appartement-besancon-25000-g439-du-t2-au-t3-jusqu-a-160000-euros"
+      location: "https://www.pap.fr/annonce/location-appartement-besancon-25000-g439-du-t2-au-t3"
+    selectors:
+      listing_container: "div.search-list-item"
+      title: "span.item-title"
+      price: "span.item-price"
+      surface: "ul.item-tags li:nth-child(2)"
+      rooms: "ul.item-tags li:nth-child(1)"
+      location: "span.item-description"
+      link: "a.item-title-link"
+      description: "div.item-description"
+      dpe: "div.item-dpe"
+      photos: "img.item-photo"
+    pagination:
+      param: "page"
+      max_pages: 3
+    rate_limit:
+      delay_min: 3
+      delay_max: 6
+    frequency:
+      vente: "0 7,11,13,16,18,20 * * *"  # 6x/jour
+      location: "0 6 * * *"               # 1x/jour
+
+  seloger:
+    enabled: true
+    types:
+      - location  # Location uniquement en v1
+    base_urls:
+      location: "https://www.seloger.com/list.htm?projects=1&types=1&places=[{ci:250056}]&rooms=2,3&enterprise=0&qsVersion=1.0"
+    selectors:
+      listing_container: "div[data-testid='sl.explore.card-container']"
+      title: "div[data-testid='sl.explore.card-title']"
+      price: "div[data-testid='sl.explore.card-price']"
+      surface: "div[data-testid='sl.explore.card-surface']"
+      rooms: "div[data-testid='sl.explore.card-rooms']"
+      location: "div[data-testid='sl.explore.card-city']"
+      link: "a[data-testid='sl.explore.card-link']"
+      description: "div[data-testid='sl.explore.card-description']"
+      dpe: "div[data-testid='sl.explore.card-dpe']"
+      photos: "img[data-testid='sl.explore.card-photo']"
+    pagination:
+      param: "LISTING-LISTpg"
+      max_pages: 3
+    rate_limit:
+      delay_min: 3
+      delay_max: 7
+    frequency:
+      location: "0 6 * * *"  # 1x/jour
+
+# Configuration globale du scraping
+global:
+  user_agent_rotation: true
+  respect_robots_txt: true
+  max_retries: 3
+  retry_delay: 10
+  timeout: 30

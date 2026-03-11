@@ -1,0 +1,74 @@
+# Configuration du scoring composite ImmoScan
+# Score global 0-100, pondere selon les criteres ci-dessous.
+
+poids:
+  rentabilite: 0.40
+  localisation: 0.25
+  dpe: 0.15
+  negociation: 0.10
+  vacance: 0.10
+
+# Scores DPE (sur 100)
+dpe_scores:
+  A: 100
+  B: 85
+  C: 65
+  D: 40
+  E: 0   # Hors criteres mais stocke si present
+  F: 0
+  G: 0
+
+# Seuils d'alerte
+alertes:
+  top:
+    score_min: 80
+    renta_min: 8.0  # % brut
+    action: "alerte_immediate"
+  bon:
+    score_min: 60
+    score_max: 79
+    renta_min_nego: 8.0  # % brut apres negociation
+    action: "digest_2h"
+  veille:
+    score_max: 59
+    action: "stockage_seul"
+  baisse_prix:
+    action: "alerte_specifique"
+
+# Scenarios de negociation (% de decote)
+negociation:
+  scenarios: [0, 5, 10, 15]
+  marge_max: 15  # % maximum de negociation envisagee
+
+# Objectif de rentabilite
+rentabilite:
+  cible_brute: 8.0  # % minimum vise
+  bonus_seuil: 8.0  # % a partir duquel un bonus est applique au score
+  bonus_max: 20     # Points bonus maximum
+
+# Score de rentabilite (mapping lineaire)
+rentabilite_scoring:
+  min_renta: 4.0   # En dessous = score 0
+  max_renta: 12.0  # Au dessus = score 100
+
+# Score de negociation
+negociation_scoring:
+  signaux_texte:
+    - "urgent"
+    - "prix a debattre"
+    - "a negocier"
+    - "faire offre"
+    - "vente rapide"
+    - "mutation"
+    - "succession"
+    - "divorce"
+    - "baisse de prix"
+  poids_signal: 15      # Points par signal detecte (max 2 signaux)
+  poids_baisse_prix: 40  # Points si baisse de prix historique detectee
+  poids_duree_vente: 30  # Points si annonce en ligne > 30 jours
+
+# Score vacance locative
+vacance_scoring:
+  tension_elevee: 90   # Score si tension locative elevee
+  tension_moyenne: 60  # Score si tension locative moyenne
+  tension_faible: 30   # Score si tension locative faible

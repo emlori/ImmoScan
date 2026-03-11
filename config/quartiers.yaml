@@ -1,0 +1,119 @@
+# Configuration des quartiers de Besancon pour ImmoScan
+# Zones ciblees avec scores d'attractivite, profils locataires et loyers fallback.
+
+quartiers:
+  centre_ville:
+    nom: "Centre-Ville"
+    code_postal: "25000"
+    score_attractivite: 85
+    tension_locative: 0.85  # 0-1, 1 = tres tendu
+    profil_locataire: "Etudiants, jeunes actifs, couples"
+    risque_vacance: "faible"
+    # Coordonnees approximatives du centre du quartier (WGS84)
+    centre:
+      lat: 47.2378
+      lon: 6.0241
+    # Loyers fallback (utilises si Observatoire < 5 annonces pour le segment)
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 550
+          loyer_m2: 15.0
+        nu:
+          loyer_median: 450
+          loyer_m2: 12.5
+      T3:
+        meuble:
+          loyer_median: 700
+          loyer_m2: 12.5
+        nu:
+          loyer_median: 580
+          loyer_m2: 10.5
+    # Points d'interet pour le score de localisation
+    proximite:
+      tram: true
+      commerces: true
+      campus: false
+      gare: true
+
+  battant:
+    nom: "Battant"
+    code_postal: "25000"
+    score_attractivite: 80
+    tension_locative: 0.80
+    profil_locataire: "Etudiants, artistes, jeunes actifs"
+    risque_vacance: "faible"
+    centre:
+      lat: 47.2410
+      lon: 6.0180
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 520
+          loyer_m2: 14.5
+        nu:
+          loyer_median: 430
+          loyer_m2: 12.0
+      T3:
+        meuble:
+          loyer_median: 670
+          loyer_m2: 12.0
+        nu:
+          loyer_median: 560
+          loyer_m2: 10.0
+    proximite:
+      tram: true
+      commerces: true
+      campus: false
+      gare: true
+
+  chablais:
+    nom: "Chablais"
+    code_postal: "25000"
+    score_attractivite: 70
+    tension_locative: 0.70
+    profil_locataire: "Familles, jeunes actifs"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2350
+      lon: 6.0310
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 480
+          loyer_m2: 13.5
+        nu:
+          loyer_median: 400
+          loyer_m2: 11.0
+      T3:
+        meuble:
+          loyer_median: 620
+          loyer_m2: 11.0
+        nu:
+          loyer_median: 520
+          loyer_m2: 9.5
+    proximite:
+      tram: true
+      commerces: true
+      campus: false
+      gare: false
+
+# Configuration globale de localisation
+scoring_localisation:
+  poids_tram: 30
+  poids_commerces: 25
+  poids_campus: 20
+  poids_gare: 15
+  poids_attractivite: 10
+  # Rayon de recherche pour les POI (en metres)
+  rayon_tram: 500
+  rayon_commerces: 300
+  rayon_campus: 1000
+  rayon_gare: 1500
+
+# API de geocodage
+geocodage:
+  api_url: "https://api-adresse.data.gouv.fr/search/"
+  cache_ttl: 86400  # 24h en secondes
+  ville_filtre: "Besancon"
+  code_postal: "25000"
