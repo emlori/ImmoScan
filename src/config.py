@@ -11,12 +11,16 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Racine du projet (parent du dossier src/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIR = PROJECT_ROOT / "config"
+
+# Charger le .env avant toute instanciation de BaseSettings
+load_dotenv(PROJECT_ROOT / ".env")
 
 
 class DatabaseSettings(BaseSettings):
