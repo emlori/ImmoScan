@@ -96,7 +96,7 @@ immoscan/
 | Surface min T2 | ≥ 35 m² |
 | Surface min T3 | ≥ 55 m² |
 | DPE | A, B, C, D uniquement |
-| Quartiers | Centre-Ville, Battant, Chablais (côté centre) |
+| Quartiers | Centre-Ville, Battant, Chablais, Rivotte, Grette - Butte, Montrapon, Saint-Claude - Torcols |
 | Objectif renta brute | ≥ 8% |
 | Marge négo max | 15% |
 

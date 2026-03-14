@@ -6,6 +6,11 @@ les red flags et un resume structure.
 
 Respecte un plafond de 300 appels/jour et implemente un retry
 avec backoff exponentiel sur les erreurs 429/500.
+
+Suit les best practices Anthropic :
+- System prompt pour le role et les regles
+- Few-shot examples avec XML tags
+- Prefilling de la reponse assistant pour forcer le JSON
 """
 
 from __future__ import annotations
@@ -13,12 +18,16 @@ from __future__ import annotations
 import json
 import logging
 import time
-from datetime import date, datetime
+from datetime import date
+from pathlib import Path
 from typing import Any
 
 import anthropic
 
 logger = logging.getLogger(__name__)
+
+# Repertoire des prompts
+_PROMPTS_DIR = Path(__file__).resolve().parent.parent.parent / "prompts"
 
 # Schema de reponse attendu de Claude
 EXPECTED_KEYS = {
@@ -43,12 +52,34 @@ VALID_ETAT_BIEN = {
 }
 
 
+def _load_prompt_file(filename: str) -> str:
+    """Charge un fichier prompt depuis le dossier prompts/.
+
+    Args:
+        filename: Nom du fichier prompt.
+
+    Returns:
+        Contenu du fichier prompt.
+    """
+    filepath = _PROMPTS_DIR / filename
+    if not filepath.exists():
+        logger.warning("Fichier prompt introuvable : %s", filepath)
+        return ""
+    with open(filepath, encoding="utf-8") as f:
+        return f.read()
+
+
 class ClaudeEnricher:
     """Enrichissement d'annonces immobilieres via Claude Haiku.
 
     Analyse la description textuelle d'une annonce pour en extraire
     des informations structurees : signaux de negociation, etat du bien,
     equipements, red flags, informations de copropriete et resume.
+
+    Utilise les best practices Anthropic :
+    - System prompt separe pour le role et les contraintes
+    - Few-shot examples avec balises XML pour calibrer les reponses
+    - Prefilling du message assistant pour forcer la sortie JSON
 
     Attributes:
         api_key: Cle API Anthropic.
@@ -91,6 +122,10 @@ class ClaudeEnricher:
         else:
             self._client = anthropic.Anthropic(api_key=api_key)
 
+        # Charger les prompts depuis les fichiers
+        self._system_prompt = _load_prompt_file("enrichment_system.md")
+        self._examples_prompt = _load_prompt_file("enrichment_examples.md")
+
         logger.info(
             "ClaudeEnricher initialise (modele=%s, max_daily=%d)",
             self.model,
@@ -101,7 +136,8 @@ class ClaudeEnricher:
         """Enrichit une annonce en appelant Claude Haiku.
 
         Construit un prompt structure a partir des donnees de l'annonce,
-        appelle l'API Claude, puis parse et valide la reponse JSON.
+        appelle l'API Claude avec system prompt + few-shot + prefilling,
+        puis parse et valide la reponse JSON.
 
         Args:
             annonce_data: Dictionnaire contenant les donnees de l'annonce.
@@ -122,18 +158,24 @@ class ClaudeEnricher:
             )
             return None
 
-        prompt = self._build_prompt(annonce_data)
+        user_message = self._build_user_message(annonce_data)
+        system_prompt = self._build_system_prompt()
 
         for attempt in range(self.max_retries):
             try:
                 response = self._client.messages.create(
                     model=self.model,
                     max_tokens=1024,
-                    messages=[{"role": "user", "content": prompt}],
+                    system=system_prompt,
+                    messages=[
+                        {"role": "user", "content": user_message},
+                        # Prefilling : force Claude a commencer par "{"
+                        {"role": "assistant", "content": "{"},
+                    ],
                 )
 
                 self._daily_call_count += 1
-                response_text = response.content[0].text
+                response_text = "{" + response.content[0].text
                 result = self._parse_response(response_text)
 
                 if result is not None:
@@ -195,14 +237,40 @@ class ClaudeEnricher:
         )
         return None
 
-    def _build_prompt(self, annonce_data: dict[str, Any]) -> str:
-        """Construit le prompt d'analyse structure pour Claude.
+    def _build_system_prompt(self) -> str:
+        """Construit le system prompt avec role, regles et exemples.
+
+        Returns:
+            System prompt complet pour Claude.
+        """
+        parts = []
+
+        if self._system_prompt:
+            parts.append(self._system_prompt)
+        else:
+            # Fallback inline si le fichier prompt n'existe pas
+            parts.append(
+                "Tu es un analyste expert en investissement locatif "
+                "specialise sur Besancon. Analyse les annonces immobilieres "
+                "et retourne UNIQUEMENT un objet JSON valide."
+            )
+
+        if self._examples_prompt:
+            parts.append(self._examples_prompt)
+
+        return "\n\n".join(parts)
+
+    def _build_user_message(self, annonce_data: dict[str, Any]) -> str:
+        """Construit le message utilisateur avec les donnees de l'annonce.
+
+        Utilise des balises XML pour structurer clairement les donnees
+        d'entree conformement aux best practices Anthropic.
 
         Args:
             annonce_data: Dictionnaire contenant les donnees de l'annonce.
 
         Returns:
-            Prompt texte formate pour Claude.
+            Message utilisateur formate avec balises XML.
         """
         description = annonce_data.get("description_texte", "Non disponible")
         prix = annonce_data.get("prix", "Non renseigne")
@@ -213,39 +281,18 @@ class ClaudeEnricher:
         adresse = annonce_data.get("adresse_brute", "Non renseignee")
         charges = annonce_data.get("charges_copro", "Non renseigne")
 
-        prompt = f"""Tu es un expert en investissement locatif a Besancon.
-Analyse cette annonce immobiliere et retourne UNIQUEMENT un objet JSON valide (sans texte avant ou apres).
+        return f"""Analyse cette annonce et retourne ton analyse JSON.
 
-## Annonce a analyser
-
-- **Description** : {description}
-- **Prix** : {prix} EUR
-- **Surface** : {surface} m2
-- **Nombre de pieces** : {nb_pieces}
-- **Quartier** : {quartier}
-- **DPE** : {dpe}
-- **Adresse** : {adresse}
-- **Charges copropriete** : {charges} EUR/mois
-
-## Format de reponse attendu
-
-Retourne EXACTEMENT ce format JSON :
-
-{{
-  "signaux_nego": ["liste de signaux de negociation detectes dans le texte, ex: urgent, prix a debattre, vente rapide, succession, etc."],
-  "etat_bien": "neuf | tres_bon_etat | bon_etat | correct | a_rafraichir | travaux_importants | a_renover | inconnu",
-  "equipements": ["liste des equipements mentionnes, ex: parking, cave, balcon, terrasse, ascenseur, double_vitrage, parquet, etc."],
-  "red_flags": ["points de vigilance ou alertes detectes, ex: travaux copro, nuisances, DPE mediocre, etc."],
-  "info_copro": {{"nb_lots": null, "charges_annuelles": null}},
-  "resume": "Resume synthetique de l'annonce en 1-2 phrases pour un investisseur."
-}}
-
-Regles :
-- Si aucun signal n'est detecte pour un champ liste, retourne une liste vide [].
-- Pour info_copro, utilise null si l'information n'est pas disponible.
-- Le resume doit etre utile pour un investisseur locatif (mentionner rentabilite potentielle, points forts/faibles).
-"""
-        return prompt
+<annonce>
+- Description : {description}
+- Prix : {prix} EUR
+- Surface : {surface} m2
+- Nombre de pieces : {nb_pieces}
+- Quartier : {quartier}
+- DPE : {dpe}
+- Adresse : {adresse}
+- Charges copropriete : {charges} EUR/mois
+</annonce>"""
 
     def _parse_response(self, response_text: str) -> dict[str, Any] | None:
         """Parse et valide la reponse JSON de Claude.

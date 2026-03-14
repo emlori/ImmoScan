@@ -15,7 +15,7 @@ from telegram.constants import ParseMode
 from telegram.error import TelegramError
 
 from src.alerts.formatter import AlertFormatter
-from src.config import TelegramSettings, get_settings
+from src.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,8 @@ class TelegramBot:
     def send_alert_sync(self, message: str, niveau: str) -> bool:
         """Version synchrone de send_alert.
 
-        Cree ou reutilise une boucle asyncio pour executer l'envoi.
+        Cree une boucle asyncio dediee pour chaque envoi, en recreant
+        le Bot interne pour eviter les problemes de event loop ferme.
 
         Args:
             message: Texte du message en format MarkdownV2.
@@ -110,16 +111,31 @@ class TelegramBot:
             loop = None
 
         if loop and loop.is_running():
-            # Si une boucle est deja en cours, creer une tache
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 result = pool.submit(
-                    asyncio.run, self.send_alert(message, niveau)
+                    self._run_in_new_loop, message, niveau
                 ).result()
             return result
         else:
-            return asyncio.run(self.send_alert(message, niveau))
+            return self._run_in_new_loop(message, niveau)
+
+    def _run_in_new_loop(self, message: str, niveau: str) -> bool:
+        """Execute l'envoi dans un event loop neuf.
+
+        Recree le Bot interne pour eviter les problemes de client HTTP
+        lie a un event loop ferme.
+
+        Args:
+            message: Texte du message.
+            niveau: Niveau d'alerte.
+
+        Returns:
+            True si envoye avec succes.
+        """
+        self._bot = Bot(token=self.bot_token)
+        return asyncio.run(self.send_alert(message, niveau))
 
     async def send_immediate(
         self,
@@ -153,6 +169,7 @@ class TelegramBot:
         annonce_data: dict[str, Any],
         score: dict[str, Any],
         renta: dict[str, Any],
+        enrichment: dict[str, Any] | None = None,
     ) -> bool:
         """Envoie une alerte BON PLAN.
 
@@ -162,11 +179,12 @@ class TelegramBot:
             annonce_data: Donnees de l'annonce.
             score: Donnees de scoring.
             renta: Donnees de rentabilite.
+            enrichment: Donnees d'enrichissement IA (optionnel).
 
         Returns:
             True si envoye avec succes, False sinon.
         """
-        message = self.formatter.format_bon_alert(annonce_data, score, renta)
+        message = self.formatter.format_bon_alert(annonce_data, score, renta, enrichment)
         escaped_message = self._escape_markdown(message)
         return await self.send_alert(escaped_message, "bon")
 
@@ -238,8 +256,9 @@ class TelegramBot:
         """
         # Caracteres speciaux MarkdownV2 qui doivent etre echappes
         # On ne re-echappe pas les caracteres deja echappes
+        # Note: *, [, ], (, ) ne sont pas echappes car utilises par la syntaxe Markdown
         special_chars = [
-            "_", "~", "`", ">", "#", "+", "=", "|", "{", "}", "!", ".",
+            "_", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", "!", ".",
         ]
         result = text
         for char in special_chars:

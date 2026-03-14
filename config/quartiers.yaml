@@ -1,19 +1,20 @@
 # Configuration des quartiers de Besancon pour ImmoScan
 # Zones ciblees avec scores d'attractivite, profils locataires et loyers fallback.
+# Les noms correspondent aux districts retournes par l'API LeBonCoin (location.district).
 
 quartiers:
+  # ── Quartiers historiques centraux ──────────────────────────────
+
   centre_ville:
     nom: "Centre-Ville"
     code_postal: "25000"
     score_attractivite: 85
-    tension_locative: 0.85  # 0-1, 1 = tres tendu
+    tension_locative: 0.85
     profil_locataire: "Etudiants, jeunes actifs, couples"
     risque_vacance: "faible"
-    # Coordonnees approximatives du centre du quartier (WGS84)
     centre:
       lat: 47.2378
       lon: 6.0241
-    # Loyers fallback (utilises si Observatoire < 5 annonces pour le segment)
     loyers_fallback:
       T2:
         meuble:
@@ -29,7 +30,37 @@ quartiers:
         nu:
           loyer_median: 580
           loyer_m2: 10.5
-    # Points d'interet pour le score de localisation
+    proximite:
+      tram: true
+      commerces: true
+      campus: false
+      gare: true
+
+  boucle:
+    nom: "Boucle"
+    code_postal: "25000"
+    score_attractivite: 85
+    tension_locative: 0.85
+    profil_locataire: "Etudiants, jeunes actifs, couples"
+    risque_vacance: "faible"
+    centre:
+      lat: 47.2365
+      lon: 6.0255
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 550
+          loyer_m2: 15.0
+        nu:
+          loyer_median: 450
+          loyer_m2: 12.5
+      T3:
+        meuble:
+          loyer_median: 700
+          loyer_m2: 12.5
+        nu:
+          loyer_median: 580
+          loyer_m2: 10.5
     proximite:
       tram: true
       commerces: true
@@ -67,6 +98,37 @@ quartiers:
       campus: false
       gare: true
 
+  rivotte:
+    nom: "Rivotte"
+    code_postal: "25000"
+    score_attractivite: 75
+    tension_locative: 0.70
+    profil_locataire: "Etudiants, jeunes actifs"
+    risque_vacance: "faible"
+    centre:
+      lat: 47.2340
+      lon: 6.0330
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 520
+          loyer_m2: 14.0
+        nu:
+          loyer_median: 430
+          loyer_m2: 12.0
+      T3:
+        meuble:
+          loyer_median: 660
+          loyer_m2: 12.0
+        nu:
+          loyer_median: 550
+          loyer_m2: 10.0
+    proximite:
+      tram: false
+      commerces: true
+      campus: false
+      gare: false
+
   chablais:
     nom: "Chablais"
     code_postal: "25000"
@@ -92,6 +154,324 @@ quartiers:
         nu:
           loyer_median: 520
           loyer_m2: 9.5
+    proximite:
+      tram: true
+      commerces: true
+      campus: false
+      gare: false
+
+  # ── Quartiers proches centre ────────────────────────────────────
+
+  chaprais_cras:
+    nom: "Chaprais Cras"
+    code_postal: "25000"
+    score_attractivite: 75
+    tension_locative: 0.75
+    profil_locataire: "Jeunes actifs, etudiants, familles"
+    risque_vacance: "faible"
+    centre:
+      lat: 47.2480
+      lon: 6.0300
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 500
+          loyer_m2: 13.5
+        nu:
+          loyer_median: 420
+          loyer_m2: 11.5
+      T3:
+        meuble:
+          loyer_median: 640
+          loyer_m2: 11.5
+        nu:
+          loyer_median: 540
+          loyer_m2: 10.0
+    proximite:
+      tram: true
+      commerces: true
+      campus: false
+      gare: true
+
+  grette_butte:
+    nom: "Grette - Butte"
+    code_postal: "25000"
+    score_attractivite: 55
+    tension_locative: 0.55
+    profil_locataire: "Familles, retraites"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2440
+      lon: 6.0120
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 440
+          loyer_m2: 11.5
+        nu:
+          loyer_median: 370
+          loyer_m2: 10.0
+      T3:
+        meuble:
+          loyer_median: 560
+          loyer_m2: 10.0
+        nu:
+          loyer_median: 480
+          loyer_m2: 8.5
+    proximite:
+      tram: true
+      commerces: false
+      campus: false
+      gare: false
+
+  bregille_pres_de_vaux:
+    nom: "Bregille - Prés de Vaux"
+    code_postal: "25000"
+    score_attractivite: 60
+    tension_locative: 0.55
+    profil_locataire: "Familles, jeunes actifs"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2380
+      lon: 6.0450
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 460
+          loyer_m2: 12.0
+        nu:
+          loyer_median: 380
+          loyer_m2: 10.5
+      T3:
+        meuble:
+          loyer_median: 580
+          loyer_m2: 10.5
+        nu:
+          loyer_median: 490
+          loyer_m2: 9.0
+    proximite:
+      tram: false
+      commerces: false
+      campus: false
+      gare: false
+
+  # ── Quartiers residentiels intermediaires ───────────────────────
+
+  montrapon_fontaine_ecu:
+    nom: "Montrapon - Fontaine Ecu - Montboucons - Montjoux"
+    code_postal: "25000"
+    score_attractivite: 65
+    tension_locative: 0.70
+    profil_locataire: "Etudiants (campus Bouloie), familles"
+    risque_vacance: "faible"
+    centre:
+      lat: 47.2380
+      lon: 6.0080
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 480
+          loyer_m2: 13.0
+        nu:
+          loyer_median: 400
+          loyer_m2: 11.0
+      T3:
+        meuble:
+          loyer_median: 610
+          loyer_m2: 11.0
+        nu:
+          loyer_median: 520
+          loyer_m2: 9.5
+    proximite:
+      tram: true
+      commerces: true
+      campus: true
+      gare: false
+
+  rosemont_saint_ferjeux:
+    nom: "Rosemont - Saint-Ferjeux"
+    code_postal: "25000"
+    score_attractivite: 60
+    tension_locative: 0.60
+    profil_locataire: "Familles, retraites, jeunes actifs"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2430
+      lon: 6.0050
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 460
+          loyer_m2: 12.0
+        nu:
+          loyer_median: 380
+          loyer_m2: 10.5
+      T3:
+        meuble:
+          loyer_median: 580
+          loyer_m2: 10.5
+        nu:
+          loyer_median: 490
+          loyer_m2: 9.0
+    proximite:
+      tram: false
+      commerces: false
+      campus: false
+      gare: false
+
+  # ── Quartiers peripheriques ─────────────────────────────────────
+
+  palente_orchamps:
+    nom: "Palente - Orchamps - Saragosse - Vaîtes"
+    code_postal: "25000"
+    score_attractivite: 55
+    tension_locative: 0.55
+    profil_locataire: "Familles, primo-accedants"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2530
+      lon: 6.0400
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 430
+          loyer_m2: 11.5
+        nu:
+          loyer_median: 360
+          loyer_m2: 10.0
+      T3:
+        meuble:
+          loyer_median: 550
+          loyer_m2: 10.0
+        nu:
+          loyer_median: 470
+          loyer_m2: 8.5
+    proximite:
+      tram: true
+      commerces: false
+      campus: false
+      gare: false
+
+  saint_claude_torcols:
+    nom: "Saint-Claude - Torcols - Chailluz"
+    code_postal: "25000"
+    score_attractivite: 55
+    tension_locative: 0.55
+    profil_locataire: "Familles, primo-accedants"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2600
+      lon: 6.0250
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 430
+          loyer_m2: 11.5
+        nu:
+          loyer_median: 360
+          loyer_m2: 10.0
+      T3:
+        meuble:
+          loyer_median: 550
+          loyer_m2: 10.0
+        nu:
+          loyer_median: 470
+          loyer_m2: 8.5
+    proximite:
+      tram: false
+      commerces: false
+      campus: false
+      gare: false
+
+  velotte:
+    nom: "Velotte"
+    code_postal: "25000"
+    score_attractivite: 50
+    tension_locative: 0.45
+    profil_locataire: "Familles, retraites"
+    risque_vacance: "moyen"
+    centre:
+      lat: 47.2300
+      lon: 5.9950
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 420
+          loyer_m2: 11.0
+        nu:
+          loyer_median: 350
+          loyer_m2: 9.5
+      T3:
+        meuble:
+          loyer_median: 530
+          loyer_m2: 9.5
+        nu:
+          loyer_median: 460
+          loyer_m2: 8.5
+    proximite:
+      tram: false
+      commerces: false
+      campus: false
+      gare: false
+
+  # ── Quartiers sensibles / grands ensembles ──────────────────────
+
+  clairs_soleils_vareilles:
+    nom: "Clairs-Soleils - Vareilles"
+    code_postal: "25000"
+    score_attractivite: 40
+    tension_locative: 0.45
+    profil_locataire: "Familles, primo-accedants"
+    risque_vacance: "eleve"
+    centre:
+      lat: 47.2450
+      lon: 6.0550
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 380
+          loyer_m2: 10.0
+        nu:
+          loyer_median: 320
+          loyer_m2: 8.5
+      T3:
+        meuble:
+          loyer_median: 490
+          loyer_m2: 9.0
+        nu:
+          loyer_median: 420
+          loyer_m2: 7.5
+    proximite:
+      tram: false
+      commerces: false
+      campus: false
+      gare: false
+
+  planoise_chateaufarine:
+    nom: "Planoise - Châteaufarine"
+    code_postal: "25000"
+    score_attractivite: 40
+    tension_locative: 0.50
+    profil_locataire: "Familles, primo-accedants"
+    risque_vacance: "eleve"
+    centre:
+      lat: 47.2200
+      lon: 6.0000
+    loyers_fallback:
+      T2:
+        meuble:
+          loyer_median: 400
+          loyer_m2: 10.5
+        nu:
+          loyer_median: 330
+          loyer_m2: 9.0
+      T3:
+        meuble:
+          loyer_median: 520
+          loyer_m2: 9.5
+        nu:
+          loyer_median: 440
+          loyer_m2: 8.0
     proximite:
       tram: true
       commerces: true

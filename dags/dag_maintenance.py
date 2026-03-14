@@ -12,7 +12,6 @@ Planification : 1x/semaine le dimanche a 3h.
 from __future__ import annotations
 
 import logging
-import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any

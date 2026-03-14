@@ -14,6 +14,7 @@ authors = [
 ]
 dependencies = [
     "scrapling",
+    "curl_cffi>=0.7",
     "sqlalchemy[asyncio]>=2.0",
     "alembic",
     "psycopg2-binary",
@@ -29,6 +30,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+stealth = [
+    "camoufox[geoip]",
+]
 dev = [
     "pytest",
     "pytest-asyncio",
@@ -72,7 +76,19 @@ select = [
     "TCH",  # flake8-type-checking
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
+    "E501",   # line too long (handled by black)
+    "E402",   # module import not at top (needed in scripts/ for sys.path setup)
+    "E741",   # ambiguous variable name (single-letter vars in comprehensions)
+    "UP045",  # Optional[X] -> X | None (cosmetic, lots of existing code)
+    "TC002",  # move third-party import into type-checking block
+    "TC003",  # move stdlib import into type-checking block
+    "SIM102", # nested if -> single if with and
+    "SIM103", # return condition directly
+    "SIM105", # try-except-pass -> contextlib.suppress
+    "SIM108", # if-else -> ternary
+    "B007",   # unused loop variable
+    "B905",   # zip without strict=
+    "F841",   # unused local variable (pre-existing in parsers)
 ]
 
 [tool.ruff.lint.isort]

@@ -1,6 +1,6 @@
 """DAG Airflow pour l'observatoire des loyers ImmoScan.
 
-Scrape les annonces de location (LeBonCoin, PAP, SeLoger), valide,
+Scrape les annonces de location (LeBonCoin), valide,
 normalise et calcule les medianes de loyers par segment
 (quartier x type_bien x meuble).
 
@@ -32,7 +32,7 @@ DEFAULT_ARGS: dict[str, Any] = {
     "retry_delay": timedelta(minutes=5),
 }
 
-SOURCES_LOCATION: list[str] = ["leboncoin", "pap", "seloger"]
+SOURCES_LOCATION: list[str] = ["leboncoin"]
 
 # Segments de l'observatoire a calculer
 QUARTIERS: list[str] = ["Centre-Ville", "Battant", "Chablais"]
@@ -62,12 +62,6 @@ def scrape_location_source(source_name: str, **context: Any) -> list[dict[str, A
         if source_name == "leboncoin":
             from src.scrapers.leboncoin import LeBonCoinScraper
             scraper = LeBonCoinScraper()
-        elif source_name == "pap":
-            from src.scrapers.pap import PAPScraper
-            scraper = PAPScraper()
-        elif source_name == "seloger":
-            from src.scrapers.seloger import SeLogerScraper
-            scraper = SeLogerScraper()
         else:
             logger.error("Source inconnue: %s", source_name)
             return results
@@ -442,23 +436,11 @@ with DAG(
     tags=["immoscan", "loyers", "observatoire"],
 ) as dag:
 
-    # Taches de scraping location (paralleles)
+    # Tache de scraping location LeBonCoin
     scrape_lbc = PythonOperator(
         task_id="scrape_leboncoin_location",
         python_callable=scrape_location_source,
         op_kwargs={"source_name": "leboncoin"},
-    )
-
-    scrape_pap = PythonOperator(
-        task_id="scrape_pap_location",
-        python_callable=scrape_location_source,
-        op_kwargs={"source_name": "pap"},
-    )
-
-    scrape_seloger = PythonOperator(
-        task_id="scrape_seloger_location",
-        python_callable=scrape_location_source,
-        op_kwargs={"source_name": "seloger"},
     )
 
     # Validation
@@ -483,7 +465,5 @@ with DAG(
     )
 
     # Dependances :
-    # scrape_lbc_location ───┐
-    # scrape_pap_location ───┼──> validate_loyers ──> parse_normalize_loyers ──> compute_medianes
-    # scrape_seloger_loc ────┘
-    [scrape_lbc, scrape_pap, scrape_seloger] >> validate >> normalize >> medianes
+    # scrape_leboncoin_location ──> validate_loyers ──> parse_normalize_loyers ──> compute_medianes
+    scrape_lbc >> validate >> normalize >> medianes

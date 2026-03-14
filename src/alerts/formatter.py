@@ -58,6 +58,11 @@ class AlertFormatter:
         renta_10 = renta.get("renta_brute_nego_10", 0)
         renta_15 = renta.get("renta_brute_nego_15", 0)
 
+        # Fourchette loyer
+        loyer_nu = annonce.get("loyer_estime", 0) or 0
+        loyer_meuble = annonce.get("loyer_estime_meuble", 0) or 0
+        loyer_line = self._format_loyer_range(loyer_nu, loyer_meuble)
+
         lines = [
             "\U0001f7e2 *TOP OPPORTUNITE*",
             "",
@@ -67,6 +72,7 @@ class AlertFormatter:
             f"\U0001f3f7\\ufe0f DPE: {dpe}",
             f"\U0001f4ca Score: {score_global}/100",
             f"\U0001f4b8 Renta brute: {self._format_renta(renta_brute)}",
+            loyer_line,
             "",
             "Scenarios nego:",
             f"\\u2022 \\-5%: {self._format_renta(renta_5)} \\({self._format_prix(prix_5)}\\)",
@@ -74,11 +80,11 @@ class AlertFormatter:
             f"\\u2022 \\-15%: {self._format_renta(renta_15)} \\({self._format_prix(prix_15)}\\)",
         ]
 
-        # Resume IA si disponible
-        if enrichment and enrichment.get("resume_ia"):
-            lines.append("")
-            lines.append(f"\U0001f916 {enrichment['resume_ia']}")
+        # Analyse IA si disponible
+        if enrichment:
+            lines.extend(self._format_enrichment(enrichment))
 
+        lines.append("")
         lines.append(f"\U0001f517 [Voir l'annonce]({url})")
 
         return "\n".join(lines)
@@ -88,6 +94,7 @@ class AlertFormatter:
         annonce: dict[str, Any],
         score: dict[str, Any],
         renta: dict[str, Any],
+        enrichment: dict[str, Any] | None = None,
     ) -> str:
         """Formate une alerte BON PLAN en Markdown Telegram.
 
@@ -97,6 +104,7 @@ class AlertFormatter:
             score: Donnees de scoring (score_global).
             renta: Donnees de rentabilite (renta_brute, renta_brute_nego_5,
                 renta_brute_nego_10, renta_brute_nego_15).
+            enrichment: Donnees d'enrichissement IA (optionnel).
 
         Returns:
             Message formate en Markdown.
@@ -121,6 +129,11 @@ class AlertFormatter:
         renta_10 = renta.get("renta_brute_nego_10", 0)
         renta_15 = renta.get("renta_brute_nego_15", 0)
 
+        # Fourchette loyer
+        loyer_nu = annonce.get("loyer_estime", 0) or 0
+        loyer_meuble = annonce.get("loyer_estime_meuble", 0) or 0
+        loyer_line = self._format_loyer_range(loyer_nu, loyer_meuble)
+
         lines = [
             "\U0001f7e1 *BON PLAN*",
             "",
@@ -130,13 +143,20 @@ class AlertFormatter:
             f"\U0001f3f7\\ufe0f DPE: {dpe}",
             f"\U0001f4ca Score: {score_global}/100",
             f"\U0001f4b8 Renta brute: {self._format_renta(renta_brute)}",
+            loyer_line,
             "",
             "Scenarios nego:",
             f"\\u2022 \\-5%: {self._format_renta(renta_5)} \\({self._format_prix(prix_5)}\\)",
             f"\\u2022 \\-10%: {self._format_renta(renta_10)} \\({self._format_prix(prix_10)}\\)",
             f"\\u2022 \\-15%: {self._format_renta(renta_15)} \\({self._format_prix(prix_15)}\\)",
-            f"\U0001f517 [Voir l'annonce]({url})",
         ]
+
+        # Analyse IA si disponible
+        if enrichment:
+            lines.extend(self._format_enrichment(enrichment))
+
+        lines.append("")
+        lines.append(f"\U0001f517 [Voir l'annonce]({url})")
 
         return "\n".join(lines)
 
@@ -297,6 +317,109 @@ class AlertFormatter:
         ]
 
         return "\n".join(lines)
+
+    def _format_enrichment(self, enrichment: dict[str, Any]) -> list[str]:
+        """Formate la section d'enrichissement IA pour une alerte Telegram.
+
+        Echappe automatiquement le texte libre pour MarkdownV2.
+
+        Args:
+            enrichment: Donnees d'enrichissement IA.
+
+        Returns:
+            Liste de lignes formatees a ajouter au message.
+        """
+        esc = self._escape_text
+        lines: list[str] = ["", "\U0001f916 *Analyse IA:*"]
+
+        if enrichment.get("resume"):
+            lines.append(esc(enrichment["resume"]))
+
+        etat = enrichment.get("etat_bien")
+        if etat and etat != "inconnu":
+            etat_labels = {
+                "neuf": "Neuf",
+                "tres_bon_etat": "Tres bon etat",
+                "bon_etat": "Bon etat",
+                "correct": "Correct",
+                "a_rafraichir": "A rafraichir",
+                "travaux_importants": "Travaux importants",
+                "a_renover": "A renover",
+            }
+            lines.append(f"\\u2022 Etat: {esc(etat_labels.get(etat, etat))}")
+
+        signaux = enrichment.get("signaux_nego", [])
+        if signaux:
+            lines.append(
+                f"\\u2022 Signaux nego: {esc(', '.join(signaux))}"
+            )
+
+        equip = enrichment.get("equipements", [])
+        if equip:
+            lines.append(
+                f"\\u2022 Equipements: {esc(', '.join(equip))}"
+            )
+
+        flags = enrichment.get("red_flags", [])
+        if flags:
+            lines.append(
+                f"\\u26a0\\ufe0f Red flags: {esc(', '.join(flags))}"
+            )
+
+        copro = enrichment.get("info_copro", {})
+        if copro and copro.get("charges_annuelles"):
+            copro_text = f"{copro['charges_annuelles']} EUR/an"
+            if copro.get("nb_lots"):
+                copro_text += f", {copro['nb_lots']} lots"
+            lines.append(f"\\u2022 Copro: {esc(copro_text)}")
+
+        return lines
+
+    @staticmethod
+    def _format_loyer_range(loyer_nu: float, loyer_meuble: float) -> str:
+        """Formate la fourchette de loyer potentiel (nu a meuble).
+
+        Args:
+            loyer_nu: Loyer estime non meuble en euros/mois.
+            loyer_meuble: Loyer estime meuble en euros/mois.
+
+        Returns:
+            Ligne formatee pour Telegram MarkdownV2.
+        """
+        if loyer_nu and loyer_meuble and loyer_nu != loyer_meuble:
+            lo = int(round(loyer_nu))
+            hi = int(round(loyer_meuble))
+            return (
+                f"\U0001f3e0 Loyer potentiel: {lo}\\-{hi} EUR/mois "
+                f"\\(nu a meuble\\)"
+            )
+        elif loyer_nu:
+            return f"\U0001f3e0 Loyer potentiel: ~{int(round(loyer_nu))} EUR/mois \\(nu\\)"
+        else:
+            return "\U0001f3e0 Loyer potentiel: non disponible"
+
+    @staticmethod
+    def _escape_text(text: str) -> str:
+        """Echappe tous les caracteres speciaux MarkdownV2 dans du texte libre.
+
+        Contrairement a _escape_markdown du bot qui preserve la syntaxe Markdown
+        intentionnelle, cette methode echappe TOUT pour du contenu non-Markdown
+        (texte IA, descriptions, etc.).
+
+        Args:
+            text: Texte brut a echapper.
+
+        Returns:
+            Texte avec tous les caracteres speciaux echappes.
+        """
+        special_chars = [
+            "\\", "_", "*", "[", "]", "(", ")", "~", "`", ">",
+            "#", "+", "-", "=", "|", "{", "}", "!", ".",
+        ]
+        result = text
+        for char in special_chars:
+            result = result.replace(char, f"\\{char}")
+        return result
 
     @staticmethod
     def _format_prix(prix: int | float) -> str:

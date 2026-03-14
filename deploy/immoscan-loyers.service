@@ -1,0 +1,21 @@
+[Unit]
+Description=ImmoScan - Pipeline loyers (observatoire locations)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/immoscan
+Environment=PATH=/opt/immoscan/venv/bin:/usr/bin:/bin
+ExecStart=/opt/immoscan/venv/bin/python scripts/run_loyers.py
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=300
+
+# Securite
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/immoscan/logs /opt/immoscan/data
+PrivateTmp=true

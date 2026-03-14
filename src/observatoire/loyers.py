@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -141,7 +141,7 @@ class ObservatoireLoyers:
             clean_filtered = filtered  # Fallback : garder tout
 
         # Calculer les poids temporels
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         weights: list[float] = []
         values: list[float] = []
         loyer_m2_values: list[float] = []
@@ -351,7 +351,7 @@ class ObservatoireLoyers:
         if date_scrape is None:
             return 0.5  # Poids neutre si pas de date
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if isinstance(date_scrape, str):
             try:
@@ -361,7 +361,7 @@ class ObservatoireLoyers:
 
         # Ajouter timezone si naive
         if date_scrape.tzinfo is None:
-            date_scrape = date_scrape.replace(tzinfo=timezone.utc)
+            date_scrape = date_scrape.replace(tzinfo=UTC)
 
         delta_days = (now - date_scrape).total_seconds() / 86400.0
 

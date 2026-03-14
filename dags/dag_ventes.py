@@ -1,6 +1,6 @@
 """DAG Airflow pour le pipeline de ventes ImmoScan.
 
-Orchestre le scraping des annonces de vente (LeBonCoin, PAP),
+Orchestre le scraping des annonces de vente (LeBonCoin),
 la validation, normalisation, deduplication, geocodage, scoring,
 enrichissement IA et envoi d'alertes Telegram.
 
@@ -32,7 +32,7 @@ DEFAULT_ARGS: dict[str, Any] = {
     "retry_delay": timedelta(minutes=5),
 }
 
-SOURCES_VENTE: list[str] = ["leboncoin", "pap"]
+SOURCES_VENTE: list[str] = ["leboncoin"]
 
 
 # ------------------------------------------------------------------
@@ -60,9 +60,6 @@ def scrape_source(source_name: str, **context: Any) -> list[dict[str, Any]]:
         if source_name == "leboncoin":
             from src.scrapers.leboncoin import LeBonCoinScraper
             scraper = LeBonCoinScraper()
-        elif source_name == "pap":
-            from src.scrapers.pap import PAPScraper
-            scraper = PAPScraper()
         else:
             logger.error("Source inconnue: %s", source_name)
             return results
@@ -506,7 +503,6 @@ def send_alerts(**context: Any) -> dict[str, int]:
     Returns:
         Dictionnaire avec les compteurs d'alertes envoyees par niveau.
     """
-    import asyncio
 
     ti = context.get("ti")
     enriched = ti.xcom_pull(key="enriched", task_ids="enrich_ia")
@@ -705,20 +701,14 @@ with DAG(
     tags=["immoscan", "ventes", "scraping"],
 ) as dag:
 
-    # Taches de scraping (paralleles)
+    # Tache de scraping LeBonCoin
     scrape_leboncoin = PythonOperator(
         task_id="scrape_leboncoin",
         python_callable=scrape_source,
         op_kwargs={"source_name": "leboncoin"},
     )
 
-    scrape_pap = PythonOperator(
-        task_id="scrape_pap",
-        python_callable=scrape_source,
-        op_kwargs={"source_name": "pap"},
-    )
-
-    # Validation (soft fail : continue meme si une source echoue)
+    # Validation (soft fail : continue meme si le scraping echoue)
     validate = PythonOperator(
         task_id="validate",
         python_callable=validate_listings,
@@ -768,7 +758,5 @@ with DAG(
     )
 
     # Dependances :
-    # scrape_leboncoin ──┐
-    #                    ├──> validate ──> parse_normalize ──> dedup ──> geocode ──> compute_scores ──> enrich_ia ──> send_alerts
-    # scrape_pap ────────┘
-    [scrape_leboncoin, scrape_pap] >> validate >> normalize >> dedup >> geocode >> scores >> enrich >> alerts
+    # scrape_leboncoin ──> validate ──> parse_normalize ──> dedup ──> geocode ──> compute_scores ──> enrich_ia ──> send_alerts
+    scrape_leboncoin >> validate >> normalize >> dedup >> geocode >> scores >> enrich >> alerts

@@ -45,18 +45,22 @@ class RobotsChecker:
         self._disallowed_paths: list[str] = []
         self._checked: bool = False
 
-    def check(self, fetcher: Any) -> bool:
+    def check(self, fetcher: Any, proxy: dict[str, str] | str | None = None) -> bool:
         """Charge et parse le fichier robots.txt.
 
         Args:
             fetcher: Instance StealthyFetcher pour effectuer la requete.
+            proxy: Proxy a utiliser pour la requete.
 
         Returns:
             True si le fichier a ete charge avec succes, False sinon.
         """
         robots_url = urljoin(self.base_url, "/robots.txt")
         try:
-            response = fetcher.fetch(robots_url)
+            fetch_kwargs: dict[str, Any] = {}
+            if proxy:
+                fetch_kwargs["proxy"] = proxy
+            response = fetcher.fetch(robots_url, **fetch_kwargs)
             if response.status == 200:
                 self._parse_robots(response.text)
                 self._checked = True
@@ -195,9 +199,27 @@ class BaseScraper(ABC):
         if fetcher is not None:
             self.fetcher = fetcher
         else:
-            from scrapling import StealthyFetcher
+            try:
+                from scrapling import StealthyFetcher
 
-            self.fetcher = StealthyFetcher()
+                self.fetcher = StealthyFetcher()
+            except (ImportError, ModuleNotFoundError) as e:
+                logger.warning(
+                    "StealthyFetcher indisponible (%s), "
+                    "les sous-classes doivent fournir leur propre fetching",
+                    e,
+                )
+                self.fetcher = None
+
+        # Configuration du proxy
+        self._proxy: dict[str, str] | str | None = None
+        if self.settings.proxy.enabled and self.settings.proxy.pool_url:
+            self._proxy = self.settings.proxy.pool_url
+            logger.info(
+                "Proxy active pour '%s': %s",
+                self.source_name,
+                self._proxy.split("@")[-1] if "@" in self._proxy else "configure",
+            )
 
         # robots.txt checker
         base_urls = self.source_config.get("base_urls", {})
@@ -233,7 +255,13 @@ class BaseScraper(ABC):
         if not self.global_config.get("respect_robots_txt", True):
             logger.info("Verification robots.txt desactivee pour '%s'", self.source_name)
             return True
-        return self.robots_checker.check(self.fetcher)
+        if self.fetcher is None:
+            logger.warning(
+                "Fetcher indisponible, robots.txt non verifie pour '%s'",
+                self.source_name,
+            )
+            return True
+        return self.robots_checker.check(self.fetcher, proxy=self._proxy)
 
     def _rate_limit(self) -> None:
         """Applique le delai de rate limiting entre deux requetes.
@@ -279,11 +307,35 @@ class BaseScraper(ABC):
         for attempt in range(1, max_retries + 1):
             try:
                 logger.info("Requete [%d/%d] : %s", attempt, max_retries, url)
-                response = self.fetcher.fetch(url)
+                fetch_kwargs: dict[str, Any] = {}
+                if self._proxy:
+                    fetch_kwargs["proxy"] = self._proxy
+                response = self.fetcher.fetch(url, **fetch_kwargs)
 
-                if response.status == 200:
+                if response.status == 200 and response.text:
                     logger.debug("Reponse OK (200) pour %s", url)
                     return response
+                elif response.status == 200 and not response.text:
+                    logger.warning(
+                        "Reponse vide (200) pour %s, tentative curl_cffi...",
+                        url,
+                    )
+                    fallback = self._fetch_with_curl_cffi(url)
+                    if fallback is not None:
+                        return fallback
+                    self._nb_erreurs += 1
+                    return None
+                elif response.status == 403:
+                    logger.warning(
+                        "Bloque (403) par StealthyFetcher pour %s, "
+                        "tentative curl_cffi...",
+                        url,
+                    )
+                    fallback = self._fetch_with_curl_cffi(url)
+                    if fallback is not None:
+                        return fallback
+                    self._nb_erreurs += 1
+                    return None
                 elif response.status == 429:
                     logger.warning(
                         "Rate limited (429) pour %s, attente %ds",
@@ -321,6 +373,108 @@ class BaseScraper(ABC):
 
         logger.error("Echec apres %d tentatives pour %s", max_retries, url)
         self._nb_erreurs += 1
+        return None
+
+    @staticmethod
+    def _patch_css_first(element: Any) -> Any:
+        """Ajoute css_first() a un element Scrapling Selector si absent.
+
+        Patche recursivement : la methode css() renverra aussi des elements patches.
+
+        Args:
+            element: Element Selector de Scrapling.
+
+        Returns:
+            L'element patche avec css_first().
+        """
+        if hasattr(element, "css_first"):
+            return element
+
+        original_css = element.css
+
+        def _patched_css(selector: str) -> list[Any]:
+            results = original_css(selector)
+            return [BaseScraper._patch_css_first(r) for r in results]
+
+        def _css_first(selector: str) -> Any | None:
+            results = original_css(selector)
+            if results:
+                return BaseScraper._patch_css_first(results[0])
+            return None
+
+        element.css = _patched_css
+        element.css_first = _css_first
+        return element
+
+    def _make_adaptor_response(
+        self, html: str, url: str, status: int = 200
+    ) -> Any:
+        """Cree un objet reponse compatible Scrapling depuis du HTML brut.
+
+        Utile pour construire une reponse uniforme quel que soit le mode
+        de fetching (curl_cffi, Camoufox, etc.).
+
+        Args:
+            html: Contenu HTML de la page.
+            url: URL d'origine de la page.
+            status: Code HTTP de la reponse.
+
+        Returns:
+            Objet Adaptor avec .status, .text, .css(), .css_first(), .url.
+        """
+        from scrapling.parser import Adaptor
+
+        adaptor = Adaptor(html, url=url)
+        adaptor.status = status
+        self._patch_css_first(adaptor)
+        return adaptor
+
+    def _fetch_with_curl_cffi(self, url: str) -> Any | None:
+        """Fallback HTTP via curl_cffi avec impersonation TLS Chrome.
+
+        Utilise quand StealthyFetcher est bloque (403) par des protections
+        anti-bot comme DataDome. curl_cffi reproduit le fingerprint TLS
+        d'un vrai navigateur Chrome.
+
+        Args:
+            url: URL a recuperer.
+
+        Returns:
+            Objet compatible avec l'API Scrapling Response, ou None en cas d'echec.
+        """
+        try:
+            from curl_cffi import requests as curl_requests
+
+            proxies = None
+            if self._proxy:
+                proxies = {"http": self._proxy, "https": self._proxy}
+
+            response = curl_requests.get(
+                url,
+                impersonate="chrome",
+                proxies=proxies,
+                timeout=self.global_config.get("timeout", 30),
+            )
+
+            if response.status_code == 200 and response.text:
+                logger.info(
+                    "curl_cffi OK (200) pour %s (%d octets)",
+                    url,
+                    len(response.text),
+                )
+                return self._make_adaptor_response(response.text, str(response.url))
+
+            logger.warning(
+                "curl_cffi echec (%d) pour %s",
+                response.status_code,
+                url,
+            )
+        except ImportError:
+            logger.error("curl_cffi non installe, fallback impossible")
+        except Exception:
+            logger.error(
+                "Erreur curl_cffi pour %s", url, exc_info=True
+            )
         return None
 
     @staticmethod
@@ -429,20 +583,25 @@ class BaseScraper(ABC):
                     continue
 
                 try:
-                    detail_response = self._fetch_page(detail_url)
-                    if detail_response is not None:
-                        detail_data = self._parse_detail_page(
-                            detail_response, scrape_type
-                        )
-                        # Fusionner les donnees du listing et du detail
-                        merged = {**listing, **detail_data}
-                        merged["source"] = self.source_name
-                        merged["hash_dedup"] = self.generate_hash_dedup(detail_url)
-                        merged["date_scrape"] = datetime.now().isoformat()
-                        results.append(merged)
-                        self._nb_scrapees += 1
+                    if self._should_fetch_detail(listing):
+                        detail_response = self._fetch_page(detail_url)
+                        if detail_response is not None:
+                            detail_data = self._parse_detail_page(
+                                detail_response, scrape_type
+                            )
+                            merged = {**listing, **detail_data}
+                        else:
+                            self._nb_erreurs += 1
+                            continue
                     else:
-                        self._nb_erreurs += 1
+                        # Listing deja complet (ex: JSON), pas de fetch detail
+                        merged = listing
+
+                    merged["source"] = self.source_name
+                    merged["hash_dedup"] = self.generate_hash_dedup(detail_url)
+                    merged["date_scrape"] = datetime.now().isoformat()
+                    results.append(merged)
+                    self._nb_scrapees += 1
                 except Exception:
                     logger.error(
                         "Erreur parsing detail pour %s",
@@ -526,6 +685,21 @@ class BaseScraper(ABC):
             Dictionnaire avec les donnees detaillees de l'annonce.
         """
         ...
+
+    def _should_fetch_detail(self, listing: dict[str, Any]) -> bool:
+        """Determine si la page de detail doit etre fetche pour une annonce.
+
+        Par defaut, retourne True. Les sous-classes peuvent overrider
+        pour eviter les requetes inutiles quand les donnees sont deja
+        completes (ex: extraction JSON).
+
+        Args:
+            listing: Donnees de l'annonce extraites du listing.
+
+        Returns:
+            True s'il faut fetcher la page de detail.
+        """
+        return True
 
     @abstractmethod
     def _get_next_page_url(self, response: Any, current_page: int) -> str | None:
