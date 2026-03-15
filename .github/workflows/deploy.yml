@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  DEPLOY_PATH: /opt/immoscan
+  DEPLOY_PATH: /opt/ImmoScan
 
 jobs:
   lint:
@@ -48,7 +48,7 @@ jobs:
 
             echo "=== ImmoScan Deploy $(date) ==="
 
-            cd /opt/immoscan
+            cd /opt/ImmoScan
 
             # 1. Pull latest code
             echo "[1/5] Git pull..."

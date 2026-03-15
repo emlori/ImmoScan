@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/immoscan
-Environment=PATH=/opt/immoscan/venv/bin:/usr/bin:/bin
-ExecStart=/opt/immoscan/venv/bin/python scripts/run_pipeline_live.py
+WorkingDirectory=/opt/ImmoScan
+Environment=PATH=/opt/ImmoScan/venv/bin:/usr/bin:/bin
+ExecStart=/opt/ImmoScan/venv/bin/python scripts/run_pipeline_live.py
 StandardOutput=journal
 StandardError=journal
 TimeoutStartSec=300
