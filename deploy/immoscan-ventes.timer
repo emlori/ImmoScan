@@ -1,14 +1,15 @@
 [Unit]
-Description=ImmoScan - Timer ventes (6x/jour)
+Description=ImmoScan - Timer ventes (7x/jour)
 
 [Timer]
-# 7h, 11h, 13h, 16h, 18h, 20h
+# 7h, 11h, 13h, 16h, 18h, 20h, 22h
 OnCalendar=*-*-* 07:00:00
 OnCalendar=*-*-* 11:00:00
 OnCalendar=*-*-* 13:00:00
 OnCalendar=*-*-* 16:00:00
 OnCalendar=*-*-* 18:00:00
 OnCalendar=*-*-* 20:00:00
+OnCalendar=*-*-* 22:00:00
 # Ajouter un delai aleatoire de 0-120s pour eviter les patterns detectables
 RandomizedDelaySec=120
 Persistent=true

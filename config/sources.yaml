@@ -8,8 +8,8 @@ sources:
       - vente
       - location
     base_urls:
-      vente: "https://www.leboncoin.fr/recherche?category=9&locations=Besan%C3%A7on_25000&real_estate_type=2&price=120000-160000&rooms=2-3"
-      location: "https://www.leboncoin.fr/recherche?category=10&locations=Besan%C3%A7on_25000&real_estate_type=2&rooms=2-3"
+      vente: "https://www.leboncoin.fr/recherche?category=9&locations=Besan%C3%A7on_25000&real_estate_type=2&price=30000-160000&rooms=1-3"
+      location: "https://www.leboncoin.fr/recherche?category=10&locations=Besan%C3%A7on_25000&real_estate_type=2&rooms=1-3"
     selectors:
       listing_container: "div[data-test-id='adcard_container']"
       title: "p[data-test-id='ad-title']"
@@ -28,7 +28,7 @@ sources:
       delay_min: 2
       delay_max: 5
     frequency:
-      vente: "0 7,11,13,16,18,20 * * *"  # 6x/jour
+      vente: "0 7,11,13,16,18,20,22 * * *"  # 7x/jour
       location: "0 6 * * *"               # 1x/jour
 
 # Configuration globale du scraping

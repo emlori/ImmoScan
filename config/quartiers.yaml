@@ -16,6 +16,13 @@ quartiers:
       lat: 47.2378
       lon: 6.0241
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 430
+          loyer_m2: 16.5
+        nu:
+          loyer_median: 350
+          loyer_m2: 13.5
       T2:
         meuble:
           loyer_median: 550
@@ -47,6 +54,13 @@ quartiers:
       lat: 47.2365
       lon: 6.0255
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 430
+          loyer_m2: 16.5
+        nu:
+          loyer_median: 350
+          loyer_m2: 13.5
       T2:
         meuble:
           loyer_median: 550
@@ -78,6 +92,13 @@ quartiers:
       lat: 47.2410
       lon: 6.0180
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 410
+          loyer_m2: 16.0
+        nu:
+          loyer_median: 340
+          loyer_m2: 13.0
       T2:
         meuble:
           loyer_median: 520
@@ -109,6 +130,13 @@ quartiers:
       lat: 47.2340
       lon: 6.0330
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 400
+          loyer_m2: 15.5
+        nu:
+          loyer_median: 330
+          loyer_m2: 13.0
       T2:
         meuble:
           loyer_median: 520
@@ -140,6 +168,13 @@ quartiers:
       lat: 47.2350
       lon: 6.0310
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 380
+          loyer_m2: 14.5
+        nu:
+          loyer_median: 310
+          loyer_m2: 12.0
       T2:
         meuble:
           loyer_median: 480
@@ -173,6 +208,13 @@ quartiers:
       lat: 47.2480
       lon: 6.0300
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 400
+          loyer_m2: 15.5
+        nu:
+          loyer_median: 330
+          loyer_m2: 12.5
       T2:
         meuble:
           loyer_median: 500
@@ -204,6 +246,13 @@ quartiers:
       lat: 47.2440
       lon: 6.0120
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 350
+          loyer_m2: 13.5
+        nu:
+          loyer_median: 290
+          loyer_m2: 11.0
       T2:
         meuble:
           loyer_median: 440
@@ -235,6 +284,13 @@ quartiers:
       lat: 47.2380
       lon: 6.0450
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 360
+          loyer_m2: 14.0
+        nu:
+          loyer_median: 300
+          loyer_m2: 11.5
       T2:
         meuble:
           loyer_median: 460
@@ -268,6 +324,13 @@ quartiers:
       lat: 47.2380
       lon: 6.0080
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 390
+          loyer_m2: 15.0
+        nu:
+          loyer_median: 320
+          loyer_m2: 12.5
       T2:
         meuble:
           loyer_median: 480
@@ -299,6 +362,13 @@ quartiers:
       lat: 47.2430
       lon: 6.0050
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 360
+          loyer_m2: 14.0
+        nu:
+          loyer_median: 300
+          loyer_m2: 11.5
       T2:
         meuble:
           loyer_median: 460
@@ -332,6 +402,13 @@ quartiers:
       lat: 47.2530
       lon: 6.0400
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 340
+          loyer_m2: 13.0
+        nu:
+          loyer_median: 280
+          loyer_m2: 11.0
       T2:
         meuble:
           loyer_median: 430
@@ -363,6 +440,13 @@ quartiers:
       lat: 47.2600
       lon: 6.0250
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 340
+          loyer_m2: 13.0
+        nu:
+          loyer_median: 280
+          loyer_m2: 11.0
       T2:
         meuble:
           loyer_median: 430
@@ -394,6 +478,13 @@ quartiers:
       lat: 47.2300
       lon: 5.9950
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 330
+          loyer_m2: 12.5
+        nu:
+          loyer_median: 270
+          loyer_m2: 10.5
       T2:
         meuble:
           loyer_median: 420
@@ -427,6 +518,13 @@ quartiers:
       lat: 47.2450
       lon: 6.0550
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 310
+          loyer_m2: 12.0
+        nu:
+          loyer_median: 260
+          loyer_m2: 10.0
       T2:
         meuble:
           loyer_median: 380
@@ -458,6 +556,13 @@ quartiers:
       lat: 47.2200
       lon: 6.0000
     loyers_fallback:
+      T1:
+        meuble:
+          loyer_median: 320
+          loyer_m2: 12.5
+        nu:
+          loyer_median: 270
+          loyer_m2: 10.5
       T2:
         meuble:
           loyer_median: 400

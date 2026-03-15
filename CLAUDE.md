@@ -91,10 +91,11 @@ immoscan/
 
 | Critère | Valeur |
 |---------|--------|
-| Type | T2, T3 (appartements) |
-| Prix | 120 000 – 160 000€ |
-| Surface min T2 | ≥ 35 m² |
-| Surface min T3 | ≥ 55 m² |
+| Type | Studio, T1, T2, T3 (appartements) |
+| Prix | 30 000 – 160 000€ |
+| Surface min Studio/T1 | ≥ 9 m² |
+| Surface min T2 | ≥ 20 m² |
+| Surface min T3 | ≥ 35 m² |
 | DPE | A, B, C, D uniquement |
 | Quartiers | Centre-Ville, Battant, Chablais, Rivotte, Grette - Butte, Montrapon, Saint-Claude - Torcols |
 | Objectif renta brute | ≥ 8% |
@@ -102,7 +103,7 @@ immoscan/
 
 ## Créneaux de scraping
 
-- **Ventes** : 7h, 11h, 13h, 16h, 18h, 20h (6x/jour)
+- **Ventes** : 7h, 11h, 13h, 16h, 18h, 20h, 22h (7x/jour)
 - **Locations** (Observatoire) : 6h (1x/jour)
 
 ## Scoring composite (0-100)

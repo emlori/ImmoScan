@@ -48,7 +48,7 @@ QUARTIERS = [
     "Bregille - Prés de Vaux", "Rosemont - Saint-Ferjeux",
     "Clairs-Soleils - Vareilles", "Planoise - Châteaufarine", "Velotte",
 ]
-TYPES_BIEN = ["T2", "T3"]
+TYPES_BIEN = ["T1", "T2", "T3"]
 MEUBLE_OPTIONS = [True, False]
 
 

@@ -162,10 +162,10 @@ class LeBonCoinScraper(BaseScraper):
 
         # Filtres de prix et pieces selon le type
         ranges: dict[str, dict[str, int]] = {
-            "rooms": {"min": 2, "max": 3},
+            "rooms": {"min": 1, "max": 3},
         }
         if scrape_type == "vente":
-            ranges["price"] = {"min": 120000, "max": 160000}
+            ranges["price"] = {"min": 30000, "max": 160000}
         filters["ranges"] = ranges
 
         payload: dict[str, Any] = {

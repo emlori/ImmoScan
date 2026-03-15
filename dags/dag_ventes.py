@@ -4,7 +4,7 @@ Orchestre le scraping des annonces de vente (LeBonCoin),
 la validation, normalisation, deduplication, geocodage, scoring,
 enrichissement IA et envoi d'alertes Telegram.
 
-Planification : 6x/jour a 7h, 11h, 13h, 16h, 18h, 20h.
+Planification : 7x/jour a 7h, 11h, 13h, 16h, 18h, 20h, 22h.
 """
 
 from __future__ import annotations
@@ -694,7 +694,7 @@ with DAG(
     dag_id="immoscan_ventes",
     default_args=DEFAULT_ARGS,
     description="Pipeline de scraping et scoring des annonces de vente a Besancon",
-    schedule="0 7,11,13,16,18,20 * * *",
+    schedule="0 7,11,13,16,18,20,22 * * *",
     start_date=datetime(2026, 1, 1),
     catchup=False,
     max_active_runs=1,
