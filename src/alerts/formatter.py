@@ -67,17 +67,17 @@ class AlertFormatter:
             "\U0001f7e2 *TOP OPPORTUNITE*",
             "",
             f"\U0001f4cd {adresse} \\- {quartier}",
-            f"\U0001f4b0 {self._format_prix(prix)} \\({self._format_prix(prix_m2)}/m\\u00b2\\)",
-            f"\U0001f4d0 {surface}m\\u00b2 \\- T{nb_pieces}",
-            f"\U0001f3f7\\ufe0f DPE: {dpe}",
+            f"\U0001f4b0 {self._format_prix(prix)} \\({self._format_prix(prix_m2)}/m\u00b2\\)",
+            f"\U0001f4d0 {surface}m\u00b2 \\- T{nb_pieces}",
+            f"\U0001f3f7\ufe0f DPE: {dpe}",
             f"\U0001f4ca Score: {score_global}/100",
             f"\U0001f4b8 Renta brute: {self._format_renta(renta_brute)}",
             loyer_line,
             "",
             "Scenarios nego:",
-            f"\\u2022 \\-5%: {self._format_renta(renta_5)} \\({self._format_prix(prix_5)}\\)",
-            f"\\u2022 \\-10%: {self._format_renta(renta_10)} \\({self._format_prix(prix_10)}\\)",
-            f"\\u2022 \\-15%: {self._format_renta(renta_15)} \\({self._format_prix(prix_15)}\\)",
+            f"\u2022 \\-5%: {self._format_renta(renta_5)} \\({self._format_prix(prix_5)}\\)",
+            f"\u2022 \\-10%: {self._format_renta(renta_10)} \\({self._format_prix(prix_10)}\\)",
+            f"\u2022 \\-15%: {self._format_renta(renta_15)} \\({self._format_prix(prix_15)}\\)",
         ]
 
         # Analyse IA si disponible
@@ -138,17 +138,17 @@ class AlertFormatter:
             "\U0001f7e1 *BON PLAN*",
             "",
             f"\U0001f4cd {adresse} \\- {quartier}",
-            f"\U0001f4b0 {self._format_prix(prix)} \\({self._format_prix(prix_m2)}/m\\u00b2\\)",
-            f"\U0001f4d0 {surface}m\\u00b2 \\- T{nb_pieces}",
-            f"\U0001f3f7\\ufe0f DPE: {dpe}",
+            f"\U0001f4b0 {self._format_prix(prix)} \\({self._format_prix(prix_m2)}/m\u00b2\\)",
+            f"\U0001f4d0 {surface}m\u00b2 \\- T{nb_pieces}",
+            f"\U0001f3f7\ufe0f DPE: {dpe}",
             f"\U0001f4ca Score: {score_global}/100",
             f"\U0001f4b8 Renta brute: {self._format_renta(renta_brute)}",
             loyer_line,
             "",
             "Scenarios nego:",
-            f"\\u2022 \\-5%: {self._format_renta(renta_5)} \\({self._format_prix(prix_5)}\\)",
-            f"\\u2022 \\-10%: {self._format_renta(renta_10)} \\({self._format_prix(prix_10)}\\)",
-            f"\\u2022 \\-15%: {self._format_renta(renta_15)} \\({self._format_prix(prix_15)}\\)",
+            f"\u2022 \\-5%: {self._format_renta(renta_5)} \\({self._format_prix(prix_5)}\\)",
+            f"\u2022 \\-10%: {self._format_renta(renta_10)} \\({self._format_prix(prix_10)}\\)",
+            f"\u2022 \\-15%: {self._format_renta(renta_15)} \\({self._format_prix(prix_15)}\\)",
         ]
 
         # Analyse IA si disponible
@@ -190,7 +190,7 @@ class AlertFormatter:
             "\U0001f4c9 *BAISSE DE PRIX*",
             "",
             f"\U0001f4cd {adresse} \\- {quartier}",
-            f"\U0001f4d0 {surface}m\\u00b2 \\- T{nb_pieces}",
+            f"\U0001f4d0 {surface}m\u00b2 \\- T{nb_pieces}",
             "",
             f"Ancien prix: {self._format_prix(ancien_prix)}",
             f"Nouveau prix: {self._format_prix(nouveau_prix)}",
@@ -261,8 +261,8 @@ class AlertFormatter:
                 quartier = annonce.get("quartier", "?")
                 diff = ancien - nouveau
                 lines.append(
-                    f"\\u2022 {quartier}: {self._format_prix(ancien)} "
-                    f"\\u2192 {self._format_prix(nouveau)} "
+                    f"\u2022 {quartier}: {self._format_prix(ancien)} "
+                    f"\u2192 {self._format_prix(nouveau)} "
                     f"\\(\\-{self._format_prix(diff)}\\)"
                 )
         else:
@@ -276,11 +276,11 @@ class AlertFormatter:
         sources = stats.get("sources", [])
 
         lines.append("*Stats pipeline:*")
-        lines.append(f"\\u2022 Annonces scrapees: {nb_scrapees}")
-        lines.append(f"\\u2022 Nouvelles: {nb_nouvelles}")
-        lines.append(f"\\u2022 Erreurs: {nb_erreurs}")
+        lines.append(f"\u2022 Annonces scrapees: {nb_scrapees}")
+        lines.append(f"\u2022 Nouvelles: {nb_nouvelles}")
+        lines.append(f"\u2022 Erreurs: {nb_erreurs}")
         if sources:
-            lines.append(f"\\u2022 Sources actives: {', '.join(sources)}")
+            lines.append(f"\u2022 Sources actives: {', '.join(sources)}")
         lines.append("")
 
         # Stats Observatoire
@@ -289,9 +289,9 @@ class AlertFormatter:
         fiabilite = obs_stats.get("fiabilite", "N/A")
 
         lines.append("*Observatoire loyers:*")
-        lines.append(f"\\u2022 Annonces location: {nb_locations}")
-        lines.append(f"\\u2022 Segments couverts: {segments}")
-        lines.append(f"\\u2022 Fiabilite: {fiabilite}")
+        lines.append(f"\u2022 Annonces location: {nb_locations}")
+        lines.append(f"\u2022 Segments couverts: {segments}")
+        lines.append(f"\u2022 Fiabilite: {fiabilite}")
 
         return "\n".join(lines)
 
@@ -309,7 +309,7 @@ class AlertFormatter:
         timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
 
         lines = [
-            "\\u26a0\\ufe0f *ALERTE SYSTEME*",
+            "\u26a0\ufe0f *ALERTE SYSTEME*",
             "",
             f"*Evenement:* {event}",
             f"*Detail:* {detail}",
@@ -346,24 +346,24 @@ class AlertFormatter:
                 "travaux_importants": "Travaux importants",
                 "a_renover": "A renover",
             }
-            lines.append(f"\\u2022 Etat: {esc(etat_labels.get(etat, etat))}")
+            lines.append(f"\u2022 Etat: {esc(etat_labels.get(etat, etat))}")
 
         signaux = enrichment.get("signaux_nego", [])
         if signaux:
             lines.append(
-                f"\\u2022 Signaux nego: {esc(', '.join(signaux))}"
+                f"\u2022 Signaux nego: {esc(', '.join(signaux))}"
             )
 
         equip = enrichment.get("equipements", [])
         if equip:
             lines.append(
-                f"\\u2022 Equipements: {esc(', '.join(equip))}"
+                f"\u2022 Equipements: {esc(', '.join(equip))}"
             )
 
         flags = enrichment.get("red_flags", [])
         if flags:
             lines.append(
-                f"\\u26a0\\ufe0f Red flags: {esc(', '.join(flags))}"
+                f"\u26a0\ufe0f Red flags: {esc(', '.join(flags))}"
             )
 
         copro = enrichment.get("info_copro", {})
@@ -371,7 +371,7 @@ class AlertFormatter:
             copro_text = f"{copro['charges_annuelles']} EUR/an"
             if copro.get("nb_lots"):
                 copro_text += f", {copro['nb_lots']} lots"
-            lines.append(f"\\u2022 Copro: {esc(copro_text)}")
+            lines.append(f"\u2022 Copro: {esc(copro_text)}")
 
         return lines
 
