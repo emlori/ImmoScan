@@ -14,10 +14,12 @@ Execute toutes les etapes :
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sys
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +49,90 @@ X = "\033[0m"
 
 def step(n: int, name: str) -> None:
     print(f"\n{B}{C}[ETAPE {n}] {name}{X}")
+
+
+# ── Registre de deduplication des alertes ────────────────────────
+ALERTES_REGISTRY_PATH = PROJECT_ROOT / "data" / "alertes_sent.json"
+REGISTRY_RETENTION_DAYS = 60
+
+
+def load_registry() -> dict[str, dict[str, Any]]:
+    """Charge le registre des alertes deja envoyees depuis le fichier JSON."""
+    if not ALERTES_REGISTRY_PATH.exists():
+        return {}
+    try:
+        return json.loads(ALERTES_REGISTRY_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning("Registre alertes corrompu, reset: %s", e)
+        return {}
+
+
+def save_registry(registry: dict[str, dict[str, Any]]) -> None:
+    """Sauvegarde le registre sur disque."""
+    ALERTES_REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ALERTES_REGISTRY_PATH.write_text(
+        json.dumps(registry, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
+def purge_registry(registry: dict[str, dict[str, Any]]) -> int:
+    """Supprime les entrees de plus de REGISTRY_RETENTION_DAYS jours. Retourne le nombre purgees."""
+    cutoff = (datetime.now() - timedelta(days=REGISTRY_RETENTION_DAYS)).isoformat()
+    to_remove = [
+        url for url, data in registry.items()
+        if data.get("date_envoi", "") < cutoff
+    ]
+    for url in to_remove:
+        del registry[url]
+    return len(to_remove)
+
+
+def check_dedup(
+    registry: dict[str, dict[str, Any]],
+    annonce: dict[str, Any],
+    niveau: str,
+) -> str:
+    """Verifie si une annonce doit etre envoyee.
+
+    Returns:
+        'send' : nouvelle annonce, envoyer l'alerte.
+        'skip' : deja alertee au meme prix.
+        'baisse' : baisse de prix detectee, envoyer alerte baisse.
+    """
+    url = annonce.get("url_source", "")
+    if not url:
+        return "send"
+
+    entry = registry.get(url)
+    if entry is None:
+        return "send"
+
+    prix_actuel = annonce.get("prix", 0)
+    prix_registre = entry.get("prix", 0)
+
+    if prix_actuel < prix_registre:
+        return "baisse"
+
+    return "skip"
+
+
+def register_alert(
+    registry: dict[str, dict[str, Any]],
+    annonce: dict[str, Any],
+    niveau: str,
+) -> None:
+    """Enregistre une alerte envoyee dans le registre."""
+    url = annonce.get("url_source", "")
+    if not url:
+        return
+    now = datetime.now().isoformat(timespec="seconds")
+    registry[url] = {
+        "niveau": niveau,
+        "prix": annonce.get("prix", 0),
+        "date_envoi": registry.get(url, {}).get("date_envoi", now),
+        "date_maj": now,
+    }
 
 
 def main() -> None:
@@ -325,7 +411,7 @@ def main() -> None:
         print(f"  Enrichies: {enriched_count}/{len(to_enrich)}")
 
     # ============================================================
-    # ETAPE 8 : ALERTES TELEGRAM
+    # ETAPE 8 : ALERTES TELEGRAM (avec deduplication)
     # ============================================================
     step(8, "ALERTES TELEGRAM")
 
@@ -335,58 +421,94 @@ def main() -> None:
     formatter = AlertFormatter()
     bot = TelegramBot()
     sent_count = 0
+    skip_count = 0
+    baisse_count = 0
+
+    # Charger le registre de dedup
+    registry = load_registry()
+    purged = purge_registry(registry)
+    if purged:
+        print(f"  Registre: {purged} anciennes entrees purgees (>{REGISTRY_RETENTION_DAYS}j)")
+    print(f"  Registre: {len(registry)} annonces deja alertees")
+
+    def _send_alert(a: dict[str, Any], niveau: str) -> bool:
+        """Envoie une alerte TOP ou BON avec dedup. Retourne True si envoyee."""
+        nonlocal sent_count, skip_count, baisse_count
+
+        action = check_dedup(registry, a, niveau)
+
+        if action == "skip":
+            skip_count += 1
+            return False
+
+        if action == "baisse":
+            # Baisse de prix detectee
+            entry = registry.get(a.get("url_source", ""), {})
+            ancien_prix = entry.get("prix", 0)
+            nouveau_prix = a.get("prix", 0)
+            msg = formatter.format_baisse_prix(a, ancien_prix, nouveau_prix)
+            esc = bot._escape_markdown(msg)
+            if bot.send_alert_sync(esc, "baisse_prix"):
+                register_alert(registry, a, "baisse_prix")
+                baisse_count += 1
+                pct = round((ancien_prix - nouveau_prix) / ancien_prix * 100)
+                print(
+                    f"  {G}BAISSE envoyee{X}: "
+                    f"{ancien_prix} -> {nouveau_prix} EUR (-{pct}%) "
+                    f"T{a.get('nb_pieces')} {a.get('quartier', '?')}"
+                )
+            time.sleep(0.5)
+            return True
+
+        # action == "send" : nouvelle annonce
+        if niveau == "top":
+            msg = formatter.format_top_alert(
+                a, a.get("score_data", {}), a.get("renta_data", {}),
+                a.get("enrichment"),
+            )
+        else:
+            msg = formatter.format_bon_alert(
+                a, a.get("score_data", {}), a.get("renta_data", {}),
+                a.get("enrichment"),
+            )
+        esc = bot._escape_markdown(msg)
+        if bot.send_alert_sync(esc, niveau):
+            register_alert(registry, a, niveau)
+            sent_count += 1
+            print(
+                f"  {G}{niveau.upper()} envoyee{X}: "
+                f"{a.get('prix')} EUR T{a.get('nb_pieces')} "
+                f"{a.get('quartier', '?')}"
+            )
+        time.sleep(0.5)
+        return True
 
     # TOP alerts
     for a in top_annonces[:3]:
-        msg = formatter.format_top_alert(
-            a,
-            a.get("score_data", {}),
-            a.get("renta_data", {}),
-            a.get("enrichment"),
-        )
-        esc = bot._escape_markdown(msg)
-        if bot.send_alert_sync(esc, "top"):
-            sent_count += 1
-            print(
-                f"  {G}TOP envoyee{X}: "
-                f"{a.get('prix')} EUR T{a.get('nb_pieces')} "
-                f"{a.get('quartier', '?')}"
-            )
-        time.sleep(0.5)
+        _send_alert(a, "top")
 
     # BON alerts (max 3)
     for a in bon_annonces[:3]:
-        msg = formatter.format_bon_alert(
-            a, a.get("score_data", {}), a.get("renta_data", {}),
-            a.get("enrichment"),
-        )
-        esc = bot._escape_markdown(msg)
-        if bot.send_alert_sync(esc, "bon"):
-            sent_count += 1
-            print(
-                f"  {G}BON envoyee{X}: "
-                f"{a.get('prix')} EUR T{a.get('nb_pieces')} "
-                f"{a.get('quartier', '?')}"
-            )
-        time.sleep(0.5)
+        _send_alert(a, "bon")
 
-    # Meilleure annonce si aucun TOP/BON
-    if not top_annonces and not bon_annonces and all_scored:
+    # Meilleure annonce si aucun TOP/BON envoye
+    if sent_count == 0 and baisse_count == 0 and all_scored:
         best = all_scored[0]
-        msg = formatter.format_top_alert(
-            best,
-            best.get("score_data", {}),
-            best.get("renta_data", {}),
-            best.get("enrichment"),
-        )
-        esc = bot._escape_markdown(msg)
-        if bot.send_alert_sync(esc, "top"):
-            sent_count += 1
-            sg = best["score_data"]["score_global"]
-            print(f"  {G}Meilleure annonce envoyee{X}: score={sg:.0f}")
-        time.sleep(0.5)
+        action = check_dedup(registry, best, "top")
+        if action != "skip":
+            msg = formatter.format_top_alert(
+                best, best.get("score_data", {}), best.get("renta_data", {}),
+                best.get("enrichment"),
+            )
+            esc = bot._escape_markdown(msg)
+            if bot.send_alert_sync(esc, "top"):
+                register_alert(registry, best, "top")
+                sent_count += 1
+                sg = best["score_data"]["score_global"]
+                print(f"  {G}Meilleure annonce envoyee{X}: score={sg:.0f}")
+            time.sleep(0.5)
 
-    # Digest
+    # Digest (pas de dedup, c'est un resume)
     digest = formatter.format_digest(
         [
             {
@@ -414,7 +536,13 @@ def main() -> None:
         sent_count += 1
         print(f"  {G}Digest envoye{X}")
 
-    print(f"  Messages Telegram envoyes: {sent_count}")
+    # Sauvegarder le registre
+    save_registry(registry)
+
+    print(
+        f"  Telegram: {sent_count} envoyees, {skip_count} skippees (dedup), "
+        f"{baisse_count} baisses de prix"
+    )
 
     # ============================================================
     # RESUME FINAL
@@ -430,7 +558,10 @@ def main() -> None:
         f"{B}  Scoring:        TOP={len(top_annonces)} "
         f"BON={len(bon_annonces)} VEILLE={len(veille_annonces)}{X}"
     )
-    print(f"{B}  Telegram:       {sent_count} messages envoyes{X}")
+    print(
+        f"{B}  Telegram:       {sent_count} envoyees, "
+        f"{skip_count} skippees, {baisse_count} baisses{X}"
+    )
     print(f"{B}{'='*60}{X}")
 
 

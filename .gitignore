@@ -40,6 +40,9 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
+# Runtime data (registre alertes, cache)
+data/
+
 # Backups
 backups/
 
