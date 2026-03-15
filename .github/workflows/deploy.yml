@@ -3,6 +3,10 @@ name: Deploy ImmoScan
 on:
   push:
     branches: [master]
+  workflow_dispatch:
+
+env:
+  DEPLOY_PATH: /opt/immoscan
 
 jobs:
   lint:
@@ -23,18 +27,59 @@ jobs:
 
   deploy:
     name: Deploy to VPS
-    needs: lint
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    needs: lint
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "=== ImmoScan Deploy $(date) ==="
+
             cd /opt/immoscan
-            bash scripts/deploy.sh
+
+            # 1. Pull latest code
+            echo "[1/5] Git pull..."
+            git fetch origin master
+            git reset --hard origin/master
+
+            # 2. Install dependencies
+            echo "[2/5] Install dependencies..."
+            source venv/bin/activate
+            pip install -q -r requirements.txt
+
+            # 3. Database migrations
+            echo "[3/5] Database migrations..."
+            alembic upgrade head 2>/dev/null || echo "  (pas de migration en attente)"
+
+            # 4. Install/update systemd units
+            echo "[4/5] Systemd services..."
+            cp deploy/immoscan-ventes.service /etc/systemd/system/
+            cp deploy/immoscan-ventes.timer   /etc/systemd/system/
+            cp deploy/immoscan-loyers.service /etc/systemd/system/
+            cp deploy/immoscan-loyers.timer   /etc/systemd/system/
+            systemctl daemon-reload
+            systemctl enable immoscan-ventes.timer immoscan-loyers.timer
+            systemctl restart immoscan-ventes.timer immoscan-loyers.timer
+
+            # 5. Status
+            echo "[5/5] Verification..."
+            systemctl is-active --quiet immoscan-ventes.timer && echo "  ventes.timer: OK" || echo "  ventes.timer: FAILED"
+            systemctl is-active --quiet immoscan-loyers.timer && echo "  loyers.timer: OK" || echo "  loyers.timer: FAILED"
+            echo "Prochaines executions:"
+            systemctl list-timers immoscan-* --no-pager
+
+            echo "=== Deploy OK ==="
+          ENDSSH
