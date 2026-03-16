@@ -17,7 +17,7 @@ Voici des exemples d'analyses correctes pour calibrer tes reponses.
   "etat_bien": "bon_etat",
   "equipements": ["ascenseur", "double_vitrage", "parquet", "cave"],
   "red_flags": [],
-  "info_copro": {"nb_lots": 24, "charges_annuelles": 1020},
+  "info_copro": {"nb_lots": 24, "charges_annuelles_copro": 24480, "charges_annuelles_lot": 1020},
   "resume": "T3 bien situe en centre-ville avec bon DPE (C), vendeur presse (mutation) offrant une marge de negociation. A 135k EUR pour 62m2, rentabilite brute estimee ~5.3% au prix affiche, potentiellement >7% apres negociation de 10-15%."
 }
 </analyse>
@@ -40,7 +40,7 @@ Voici des exemples d'analyses correctes pour calibrer tes reponses.
   "etat_bien": "tres_bon_etat",
   "equipements": ["cuisine_equipee", "parking"],
   "red_flags": ["DPE D - attention a la reglementation energetique future"],
-  "info_copro": {"nb_lots": null, "charges_annuelles": 720},
+  "info_copro": {"nb_lots": null, "charges_annuelles_copro": null, "charges_annuelles_lot": 720},
   "resume": "T2 renove a Battant avec locataire en place (480EUR/mois), rentabilite brute 6.5% immediate. Parking inclus est un atout locatif. DPE D a surveiller pour la conformite reglementaire. Prix/m2 de 2342EUR dans la fourchette basse du quartier."
 }
 </analyse>
@@ -63,7 +63,7 @@ Voici des exemples d'analyses correctes pour calibrer tes reponses.
   "etat_bien": "a_renover",
   "equipements": [],
   "red_flags": ["travaux toiture votes - appel de fonds probable", "DPE non renseigne - risque passoire energetique", "renovation complete necessaire - budget travaux a estimer"],
-  "info_copro": {"nb_lots": null, "charges_annuelles": null},
+  "info_copro": {"nb_lots": null, "charges_annuelles_copro": null, "charges_annuelles_lot": null},
   "resume": "T3 a renover avec travaux de copro en cours (toiture). Prix bas (1293EUR/m2) mais budget renovation + appel de fonds toiture a chiffrer. Sans DPE ni info charges, risque eleve. Potentiellement interessant si renovation <20kEUR et DPE post-travaux >=D."
 }
 </analyse>

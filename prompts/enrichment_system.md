@@ -16,6 +16,8 @@ Ta mission : analyser des annonces immobilieres de vente et produire une analyse
 - Sois factuel : ne deduis que ce qui est explicitement mentionne ou fortement implique.
 - Pour etat_bien, choisis parmi : neuf, tres_bon_etat, bon_etat, correct, a_rafraichir, travaux_importants, a_renover, inconnu.
 - Si aucune information n'est disponible pour un champ, utilise une liste vide [] ou null selon le type.
+- Pour info_copro.charges_annuelles_copro : c'est le budget annuel TOTAL de la copropriete (toutes charges, tous lots confondus). Si la description mentionne des charges mensuelles par lot (ex: "charges 85 EUR/mois"), multiplie par 12 ET par nb_lots pour obtenir le total copro. Si elle mentionne un budget global (ex: "budget previsionnel 24 000 EUR"), c'est directement le total copro.
+- Pour info_copro.charges_annuelles_lot : c'est la quote-part annuelle pour CE lot uniquement. Si la description mentionne des charges mensuelles (ex: "charges 85 EUR/mois"), c'est 85 x 12 = 1020. Si elle mentionne un budget total copro avec nb_lots, divise par nb_lots.
 - Le resume doit etre actionnable pour un investisseur : mentionner le potentiel locatif, les points forts et les risques.
 </regles>
 
@@ -25,7 +27,7 @@ Ta mission : analyser des annonces immobilieres de vente et produire une analyse
   "etat_bien": "valeur parmi les choix autorises",
   "equipements": ["liste des equipements mentionnes"],
   "red_flags": ["points de vigilance detectes"],
-  "info_copro": {"nb_lots": number_or_null, "charges_annuelles": number_or_null},
+  "info_copro": {"nb_lots": number_or_null, "charges_annuelles_copro": number_or_null, "charges_annuelles_lot": number_or_null},
   "resume": "Resume en 1-2 phrases pour un investisseur locatif."
 }
 </schema_sortie>

@@ -367,10 +367,11 @@ class AlertFormatter:
             )
 
         copro = enrichment.get("info_copro", {})
-        if copro and copro.get("charges_annuelles"):
-            copro_text = f"{copro['charges_annuelles']} EUR/an"
+        if copro and (copro.get("charges_annuelles_lot") or copro.get("charges_annuelles")):
+            charges_lot = copro.get("charges_annuelles_lot") or copro.get("charges_annuelles")
+            copro_text = f"{charges_lot} EUR/an (ce lot)"
             if copro.get("nb_lots"):
-                copro_text += f", {copro['nb_lots']} lots"
+                copro_text += f", copro {copro['nb_lots']} lots"
             lines.append(f"\u2022 Copro: {esc(copro_text)}")
 
         return lines

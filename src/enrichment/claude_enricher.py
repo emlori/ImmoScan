@@ -362,12 +362,34 @@ class ClaudeEnricher:
         # info_copro : dict ou None
         copro = parsed.get("info_copro")
         if isinstance(copro, dict):
+            nb_lots = copro.get("nb_lots")
+            charges_copro = copro.get("charges_annuelles_copro")
+            charges_lot = copro.get("charges_annuelles_lot")
+
+            # Compatibilite : ancien champ charges_annuelles
+            old_charges = copro.get("charges_annuelles")
+            if old_charges is not None and charges_lot is None and charges_copro is None:
+                charges_lot = old_charges
+
+            # Deduire charges_lot si on a le total + nb_lots
+            if charges_lot is None and charges_copro and nb_lots and nb_lots > 0:
+                charges_lot = round(charges_copro / nb_lots, 2)
+
+            # Deduire charges_copro si on a le lot + nb_lots
+            if charges_copro is None and charges_lot and nb_lots and nb_lots > 0:
+                charges_copro = round(charges_lot * nb_lots, 2)
+
             result["info_copro"] = {
-                "nb_lots": copro.get("nb_lots"),
-                "charges_annuelles": copro.get("charges_annuelles"),
+                "nb_lots": nb_lots,
+                "charges_annuelles_copro": charges_copro,
+                "charges_annuelles_lot": charges_lot,
             }
         else:
-            result["info_copro"] = {"nb_lots": None, "charges_annuelles": None}
+            result["info_copro"] = {
+                "nb_lots": None,
+                "charges_annuelles_copro": None,
+                "charges_annuelles_lot": None,
+            }
 
         # resume : chaine
         resume = parsed.get("resume", "")
