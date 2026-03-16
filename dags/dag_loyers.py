@@ -35,8 +35,9 @@ DEFAULT_ARGS: dict[str, Any] = {
 SOURCES_LOCATION: list[str] = ["leboncoin"]
 
 # Segments de l'observatoire a calculer
-QUARTIERS: list[str] = ["Centre-Ville", "Battant", "Chablais"]
-TYPES_BIEN: list[str] = ["T2", "T3"]
+# Pas de filtre quartier : on calcule les medianes pour tous les quartiers
+# presents dans les donnees scrapees.
+TYPES_BIEN: list[str] = ["T1", "T2", "T3"]
 MEUBLE_OPTIONS: list[bool] = [True, False]
 
 
@@ -212,7 +213,14 @@ def compute_medianes(**context: Any) -> dict[str, Any]:
     segments_calcules = 0
     references: list[dict[str, Any]] = []
 
-    for quartier in QUARTIERS:
+    # Extraire tous les quartiers presents dans les donnees (pas de filtre)
+    quartiers = sorted({
+        a["quartier"] for a in normalized
+        if a.get("quartier")
+    })
+    logger.info("Quartiers detectes dans les donnees: %s", quartiers)
+
+    for quartier in quartiers:
         for type_bien in TYPES_BIEN:
             for meuble in MEUBLE_OPTIONS:
                 try:
