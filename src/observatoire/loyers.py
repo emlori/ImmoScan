@@ -19,6 +19,21 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+# Surface typique par type de bien (m²) — sert de reference
+# pour l'ajustement marginal de surface
+_SURFACE_TYPIQUE: dict[str, float] = {
+    "T1": 25.0,
+    "T2": 45.0,
+    "T3": 65.0,
+    "T4": 85.0,
+    "T5": 105.0,
+}
+
+# Seuil de deviation de surface (%) au-dela duquel on ajuste
+_SURFACE_DEVIATION_SEUIL = 0.20  # 20%
+# Plafond de l'ajustement (%)
+_SURFACE_AJUSTEMENT_MAX = 0.15  # ±15%
+
 # Chemin vers la config des quartiers (fallback)
 _CONFIG_DIR = Path(__file__).resolve().parent.parent.parent / "config"
 
@@ -241,10 +256,12 @@ class ObservatoireLoyers:
                     and ref.get("type_bien") == type_bien
                     and ref.get("meuble") == meuble
                     and ref.get("nb_annonces", 0) >= self.min_fiable
-                    and ref.get("loyer_m2_median") is not None
+                    and ref.get("loyer_median") is not None
                 ):
-                    loyer_m2 = ref["loyer_m2_median"]
-                    loyer_estime = loyer_m2 * surface
+                    loyer_base = ref["loyer_median"]
+                    loyer_estime = self._ajuster_surface(
+                        loyer_base, type_bien, surface
+                    )
                     return {
                         "loyer_estime": round(loyer_estime, 2),
                         "fiabilite": "fiable",
@@ -469,27 +486,82 @@ class ObservatoireLoyers:
         meuble_key = "meuble" if meuble else "nu"
         segment_data = type_data.get(meuble_key, {})
 
-        loyer_m2 = segment_data.get("loyer_m2")
-        if loyer_m2 is None:
-            logger.warning(
-                "Loyer fallback indisponible pour %s/%s/%s",
-                quartier,
-                type_bien,
-                meuble_key,
+        # Priorite 1 : loyer_median (base par type/nb_pieces)
+        loyer_median = segment_data.get("loyer_median")
+        if loyer_median is not None:
+            loyer_estime = self._ajuster_surface(
+                loyer_median, type_bien, surface
             )
             return {
-                "loyer_estime": None,
-                "fiabilite": "indisponible",
+                "loyer_estime": round(loyer_estime, 2),
+                "fiabilite": "preliminaire",
                 "source": "fallback",
             }
 
-        loyer_estime = loyer_m2 * surface
+        # Priorite 2 : loyer_m2 (ancien mode, compatibilite)
+        loyer_m2 = segment_data.get("loyer_m2")
+        if loyer_m2 is not None:
+            loyer_estime = loyer_m2 * surface
+            return {
+                "loyer_estime": round(loyer_estime, 2),
+                "fiabilite": "preliminaire",
+                "source": "fallback",
+            }
 
+        logger.warning(
+            "Loyer fallback indisponible pour %s/%s/%s",
+            quartier,
+            type_bien,
+            meuble_key,
+        )
         return {
-            "loyer_estime": round(loyer_estime, 2),
-            "fiabilite": "preliminaire",
+            "loyer_estime": None,
+            "fiabilite": "indisponible",
             "source": "fallback",
         }
+
+    @staticmethod
+    def _ajuster_surface(
+        loyer_base: float,
+        type_bien: str,
+        surface: float,
+    ) -> float:
+        """Ajuste marginalement le loyer median selon la surface.
+
+        Le loyer de base (median du segment par type/nb_pieces) est ajuste
+        uniquement si la surface devie de plus de 20% de la surface typique
+        pour ce type. L'ajustement est plafonne a +-15%.
+
+        Logique : un T2 de 40m2 ou 50m2 se loue quasiment au meme prix.
+        Seuls les ecarts importants (ex: T2 de 60m2) justifient un ajustement.
+
+        Args:
+            loyer_base: Loyer median du segment (EUR).
+            type_bien: Type de bien ('T1', 'T2', 'T3', etc.).
+            surface: Surface reelle du bien (m2).
+
+        Returns:
+            Loyer ajuste (EUR).
+        """
+        surface_ref = _SURFACE_TYPIQUE.get(type_bien)
+        if surface_ref is None or surface <= 0:
+            return loyer_base
+
+        ecart_relatif = (surface - surface_ref) / surface_ref
+
+        # Pas d'ajustement si l'ecart est dans la zone neutre (±20%)
+        if abs(ecart_relatif) <= _SURFACE_DEVIATION_SEUIL:
+            return loyer_base
+
+        # Ajustement = partie excedentaire au-dela du seuil, plafonne
+        if ecart_relatif > 0:
+            ajustement = ecart_relatif - _SURFACE_DEVIATION_SEUIL
+        else:
+            ajustement = ecart_relatif + _SURFACE_DEVIATION_SEUIL
+
+        ajustement = max(-_SURFACE_AJUSTEMENT_MAX, min(_SURFACE_AJUSTEMENT_MAX, ajustement))
+
+        return loyer_base * (1.0 + ajustement)
 
     @staticmethod
     def _percentile(sorted_values: list[float], percentile: float) -> float:
