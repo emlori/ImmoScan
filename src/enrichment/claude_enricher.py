@@ -36,6 +36,8 @@ EXPECTED_KEYS = {
     "equipements",
     "red_flags",
     "info_copro",
+    "estimation_travaux",
+    "scenarios_location",
     "resume",
 }
 
@@ -389,6 +391,45 @@ class ClaudeEnricher:
                 "nb_lots": None,
                 "charges_annuelles_copro": None,
                 "charges_annuelles_lot": None,
+            }
+
+        # estimation_travaux : dict
+        travaux = parsed.get("estimation_travaux")
+        if isinstance(travaux, dict):
+            result["estimation_travaux"] = {
+                "necessaire": bool(travaux.get("necessaire", False)),
+                "description": travaux.get("description"),
+                "budget_bas": travaux.get("budget_bas"),
+                "budget_haut": travaux.get("budget_haut"),
+            }
+        else:
+            result["estimation_travaux"] = {
+                "necessaire": False,
+                "description": None,
+                "budget_bas": None,
+                "budget_haut": None,
+            }
+
+        # scenarios_location : dict
+        scenarios = parsed.get("scenarios_location")
+        if isinstance(scenarios, dict):
+            standard = scenarios.get("standard", {})
+            coloc = scenarios.get("colocation", {})
+            result["scenarios_location"] = {
+                "standard": {
+                    "loyer_nu": standard.get("loyer_nu") if isinstance(standard, dict) else None,
+                    "loyer_meuble": standard.get("loyer_meuble") if isinstance(standard, dict) else None,
+                },
+                "colocation": {
+                    "nb_chambres": coloc.get("nb_chambres") if isinstance(coloc, dict) else None,
+                    "loyer_par_chambre": coloc.get("loyer_par_chambre") if isinstance(coloc, dict) else None,
+                    "loyer_total": coloc.get("loyer_total") if isinstance(coloc, dict) else None,
+                },
+            }
+        else:
+            result["scenarios_location"] = {
+                "standard": {"loyer_nu": None, "loyer_meuble": None},
+                "colocation": {"nb_chambres": None, "loyer_par_chambre": None, "loyer_total": None},
             }
 
         # resume : chaine
