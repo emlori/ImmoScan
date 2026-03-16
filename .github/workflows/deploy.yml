@@ -70,14 +70,17 @@ jobs:
             cp deploy/immoscan-ventes.timer   /etc/systemd/system/
             cp deploy/immoscan-loyers.service /etc/systemd/system/
             cp deploy/immoscan-loyers.timer   /etc/systemd/system/
+            cp deploy/immoscan-listener.service /etc/systemd/system/
             systemctl daemon-reload
-            systemctl enable immoscan-ventes.timer immoscan-loyers.timer
+            systemctl enable immoscan-ventes.timer immoscan-loyers.timer immoscan-listener.service
             systemctl restart immoscan-ventes.timer immoscan-loyers.timer
+            systemctl restart immoscan-listener.service
 
             # 5. Status
             echo "[5/5] Verification..."
             systemctl is-active --quiet immoscan-ventes.timer && echo "  ventes.timer: OK" || echo "  ventes.timer: FAILED"
             systemctl is-active --quiet immoscan-loyers.timer && echo "  loyers.timer: OK" || echo "  loyers.timer: FAILED"
+            systemctl is-active --quiet immoscan-listener.service && echo "  listener: OK" || echo "  listener: FAILED"
             echo "Prochaines executions:"
             systemctl list-timers immoscan-* --no-pager
 
