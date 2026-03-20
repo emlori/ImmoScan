@@ -464,16 +464,45 @@ class ObservatoireLoyers:
         """
         quartiers = self.quartiers_config.get("quartiers", {})
 
-        # Chercher le quartier par nom
+        # Chercher le quartier par nom (exact puis par inclusion)
         quartier_data: dict[str, Any] | None = None
+        quartier_lower = quartier.lower() if quartier else ""
+
+        # Passe 1 : match exact
         for _, qdata in quartiers.items():
             if qdata.get("nom") == quartier:
                 quartier_data = qdata
                 break
 
+        # Passe 2 : match par inclusion (ex: "Montrapon" dans
+        # "Montrapon - Fontaine Ecu - Montboucons - Montjoux")
+        if quartier_data is None and quartier_lower:
+            for _, qdata in quartiers.items():
+                nom = qdata.get("nom", "")
+                if quartier_lower in nom.lower() or nom.lower() in quartier_lower:
+                    quartier_data = qdata
+                    logger.info(
+                        "Quartier '%s' matche par inclusion avec '%s'",
+                        quartier,
+                        nom,
+                    )
+                    break
+
+        # Passe 3 : fallback global Besancon (moyenne Centre-Ville)
+        if quartier_data is None:
+            for _, qdata in quartiers.items():
+                if qdata.get("nom") == "Centre-Ville":
+                    quartier_data = qdata
+                    logger.warning(
+                        "Quartier '%s' introuvable, fallback sur Centre-Ville.",
+                        quartier,
+                    )
+                    break
+
         if quartier_data is None:
             logger.warning(
-                "Quartier '%s' introuvable dans la configuration.", quartier
+                "Quartier '%s' introuvable et aucun fallback disponible.",
+                quartier,
             )
             return {
                 "loyer_estime": None,
