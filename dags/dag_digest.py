@@ -369,7 +369,7 @@ with DAG(
     dag_id="immoscan_digest",
     default_args=DEFAULT_ARGS,
     description="Digest quotidien - top annonces, baisses de prix, stats pipeline",
-    schedule="0 21 * * *",
+    schedule=None,  # Digest desactive
     start_date=datetime(2026, 1, 1),
     catchup=False,
     max_active_runs=1,

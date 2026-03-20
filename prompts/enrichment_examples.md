@@ -35,7 +35,11 @@ Voici des exemples d'analyses correctes pour calibrer tes reponses.
       "loyer_total": 760
     }
   },
-  "resume": "T3 en bon etat, centre-ville proche tram, vendeur presse (mutation). Cout total 135k EUR. En standard nu: renta ~5.2%, en colocation (2 chambres): ~6.8%. Apres negociation 10-15%, la colocation depasse 7.5%. Bon potentiel grace a la demande etudiante du quartier."
+  "prix_m2_marche": {
+    "fourchette_basse": 2000,
+    "fourchette_haute": 2800
+  },
+  "resume": "T3 en bon etat, centre-ville proche tram, vendeur presse (mutation). Prix/m2 de 2177 EUR, dans la fourchette du marche (2000-2800). Cout total 135k EUR. En standard nu: renta ~5.2%, en colocation (2 chambres): ~6.8%. Apres negociation 10-15%, la colocation depasse 7.5%. Bon potentiel grace a la demande etudiante du quartier."
 }
 </analyse>
 </exemple>
@@ -75,7 +79,11 @@ Voici des exemples d'analyses correctes pour calibrer tes reponses.
       "loyer_total": null
     }
   },
-  "resume": "T2 renove a Battant avec locataire en place (480 EUR/mois), renta brute 6.5% immediate. Colocation non applicable (T2, une seule chambre). Parking inclus est un atout. DPE D a surveiller pour conformite reglementaire. Prix/m2 de 2342 EUR dans la fourchette basse du quartier."
+  "prix_m2_marche": {
+    "fourchette_basse": 2000,
+    "fourchette_haute": 2800
+  },
+  "resume": "T2 renove a Battant avec locataire en place (480 EUR/mois), renta brute 6.5% immediate. Prix/m2 de 2342 EUR, fourchette basse du marche (2000-2800). Colocation non applicable (T2, une seule chambre). Parking inclus est un atout. DPE D a surveiller pour conformite reglementaire."
 }
 </analyse>
 </exemple>
@@ -115,7 +123,11 @@ Voici des exemples d'analyses correctes pour calibrer tes reponses.
       "loyer_total": 700
     }
   },
-  "resume": "T3 a renover, prix bas (1293 EUR/m2) mais cout total estime 121k-145k EUR (prix + renovation 46-70k EUR) + appel de fonds toiture. En standard nu post-travaux: renta ~4.4-5.3%, en colocation: ~5.8-6.9%. Sans DPE ni info charges, risque eleve. Interessant uniquement si renovation maitrisee et negociation significative du prix."
+  "prix_m2_marche": {
+    "fourchette_basse": 1600,
+    "fourchette_haute": 2200
+  },
+  "resume": "T3 a renover, prix/m2 de 1293 EUR bien en-dessous du marche (1600-2200). Cout total estime 121k-145k EUR (prix + renovation 46-70k EUR) + appel de fonds toiture. En standard nu post-travaux: renta ~4.4-5.3%, en colocation: ~5.8-6.9%. Sans DPE ni info charges, risque eleve. Interessant uniquement si renovation maitrisee et negociation significative du prix."
 }
 </analyse>
 </exemple>

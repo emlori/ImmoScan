@@ -35,7 +35,8 @@ A partir de la description textuelle et des donnees structurees d'une annonce de
 5. Informations de copropriete : nombre de lots et charges annuelles
 6. Estimation travaux : si l'etat du bien suggere des travaux (a_rafraichir, travaux_importants, a_renover), estime le budget necessaire en fourchette basse/haute basee sur la surface et la nature des travaux decrits
 7. Scenarios de location : estime le loyer mensuel en location standard (nu) et, si le bien a 2 pieces ou plus, en colocation (nombre de chambres louables et loyer par chambre)
-8. Resume investisseur : synthese actionnable en 2-3 phrases incluant le cout total estime (prix + travaux si applicables) et la rentabilite dans chaque scenario
+8. Prix m2 du marche : estime la fourchette de prix au m2 pour ce quartier et ce type de bien (en tenant compte de l'etat general du marche local), afin de comparer avec le prix/m2 de l'annonce
+9. Resume investisseur : synthese actionnable en 2-3 phrases incluant le cout total estime (prix + travaux si applicables) et la rentabilite dans chaque scenario
 </tache>
 
 <methode>
@@ -87,6 +88,10 @@ Reponds avec un unique objet JSON valide, sans texte avant ni apres. Respecte ex
       "loyer_par_chambre": "number ou null — loyer mensuel par chambre en EUR",
       "loyer_total": "number ou null — loyer total colocation en EUR"
     }
+  },
+  "prix_m2_marche": {
+    "fourchette_basse": "number — prix bas du m2 pour ce quartier/type en EUR",
+    "fourchette_haute": "number — prix haut du m2 pour ce quartier/type en EUR"
   },
   "resume": "string — synthese actionnable incluant cout total (prix + travaux), rentabilite standard et colocation si applicable"
 }

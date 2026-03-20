@@ -38,6 +38,7 @@ EXPECTED_KEYS = {
     "info_copro",
     "estimation_travaux",
     "scenarios_location",
+    "prix_m2_marche",
     "resume",
 }
 
@@ -430,6 +431,19 @@ class ClaudeEnricher:
             result["scenarios_location"] = {
                 "standard": {"loyer_nu": None, "loyer_meuble": None},
                 "colocation": {"nb_chambres": None, "loyer_par_chambre": None, "loyer_total": None},
+            }
+
+        # prix_m2_marche : dict
+        prix_m2 = parsed.get("prix_m2_marche")
+        if isinstance(prix_m2, dict):
+            result["prix_m2_marche"] = {
+                "fourchette_basse": prix_m2.get("fourchette_basse"),
+                "fourchette_haute": prix_m2.get("fourchette_haute"),
+            }
+        else:
+            result["prix_m2_marche"] = {
+                "fourchette_basse": None,
+                "fourchette_haute": None,
             }
 
         # resume : chaine

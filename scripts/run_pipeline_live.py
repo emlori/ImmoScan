@@ -508,33 +508,12 @@ def main() -> None:
                 print(f"  {G}Meilleure annonce envoyee{X}: score={sg:.0f}")
             time.sleep(0.5)
 
-    # Digest (pas de dedup, c'est un resume)
-    digest = formatter.format_digest(
-        [
-            {
-                "annonce": a,
-                "score": a.get("score_data", {}),
-                "renta": a.get("renta_data", {}),
-            }
-            for a in all_scored[:3]
-        ],
-        [],
-        {
-            "nb_scrapees": len(raw_annonces),
-            "nb_nouvelles": len(unique),
-            "nb_erreurs": rejected,
-            "sources": ["leboncoin"],
-        },
-        {
-            "nb_locations": 0,
-            "segments_couverts": 0,
-            "fiabilite": "preliminaire",
-        },
-    )
-    esc_dig = bot._escape_markdown(digest)
-    if bot.send_alert_sync(esc_dig, "digest"):
-        sent_count += 1
-        print(f"  {G}Digest envoye{X}")
+    # Digest desactive
+    # digest = formatter.format_digest(...)
+    # esc_dig = bot._escape_markdown(digest)
+    # if bot.send_alert_sync(esc_dig, "digest"):
+    #     sent_count += 1
+    #     print(f"  {G}Digest envoye{X}")
 
     # Sauvegarder le registre
     save_registry(registry)
